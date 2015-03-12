@@ -1,5 +1,3 @@
-# this file is for the tastypie REST api
-# db/api.py - tastypie resources
 from collections import OrderedDict
 from django.db import connection, DatabaseError
 try:
@@ -14,9 +12,10 @@ except DatabaseError, e:
 
 from db.DjangoTables2Serializer import DjangoTables2Serializer, \
     get_visible_columns
-from db.models import SmallMolecule, SmallMoleculeBatch, DataSet, Cell, Protein, Library, DataRecord, \
-    DataColumn, FieldInformation, get_fieldinformation, get_listing, \
-    get_detail_schema, get_detail, get_detail_bundle, get_fieldinformation, get_schema_fieldinformation,\
+from db.models import SmallMolecule, SmallMoleculeBatch, DataSet, Cell, \
+    Protein, Library, DataRecord,     DataColumn, FieldInformation, \
+    get_fieldinformation, get_listing, get_detail_schema, get_detail, \
+    get_detail_bundle, get_fieldinformation, get_schema_fieldinformation,\
     Antibody, OtherReagent
 from django.conf.urls.defaults import url
 from django.core.serializers.json import DjangoJSONEncoder
@@ -40,29 +39,29 @@ logger = logging.getLogger(__name__)
 
 
 class SmallMoleculeResource(ModelResource):
-#    batches = fields.ToManyField('db.api.SmallMoleculeBatchResource', attribute='batches', related_name='batches')
        
     class Meta:
         queryset = SmallMolecule.objects.all()
         # to override: resource_name = 'sm'
         excludes = ['column']
         allowed_methods = ['get']
-        filtering = {'date_loaded':ALL, 'date_publicly_available':ALL, 'date_data_received':ALL }
-
-#        authentication = MultiAuthentication(BasicAuthentication(), SessionAuthentication())
+        filtering = {
+            'date_loaded':ALL, 
+            'date_publicly_available':ALL, 
+            'date_data_received':ALL }
         
     def dehydrate(self, bundle):
-        _filter = ( 
-            lambda field_information: 
-                ( not bundle.obj.is_restricted 
-                    or field_information.is_unrestricted ) )
-        bundle.data = get_detail_bundle(bundle.obj, ['smallmolecule',''], _filter=_filter)
+        _filter = (lambda field_information: 
+            (not bundle.obj.is_restricted or field_information.is_unrestricted))
+        bundle.data = get_detail_bundle(
+            bundle.obj, ['smallmolecule',''], 
+            _filter=_filter)
         
         smbs = SmallMoleculeBatch.objects.filter(smallmolecule=bundle.obj)
         bundle.data['batches'] = []
         for smb in smbs:
-            bundle.data['batches'].append(
-                get_detail_bundle(smb, ['smallmoleculebatch',''], _filter=_filter))
+            bundle.data['batches'].append(get_detail_bundle(
+                smb, ['smallmoleculebatch',''], _filter=_filter))
         return bundle
 
     def build_schema(self):
@@ -78,59 +77,22 @@ class SmallMoleculeResource(ModelResource):
     def prepend_urls(self):
 
         return [
-            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)\-(?P<salt_id>\d+)/$" % self._meta.resource_name, 
-                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)\-(?P<salt_id>\d+)/$" 
+                    % self._meta.resource_name, 
+                    self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
-
-# TODO: fix this after upgrading to Tastypie >= 0.9.14 (latest) - it should work but it doesn't find the smallMolecule resource
-#class SmallMoleculeBatchResource(ModelResource):
-##    smallMolecule  = fields.ForeignKey(SmallMolecule, 'smallMolecule')
-##    smallMolecule = fields.ToOneField(SmallMoleculeResource, 'smallMolecule')
-#
-#    smallMolecule = fields.ToOneField('api.SmallMoleculeResource', attribute = 'smallMolecule', related_name='smallMolecule', full=True) #, null=True)
-#    class Meta:
-#        resourceName = "batch"
-#        # TODO: authorization
-#        # TODO: it would be good to feed these from the view/tables2 code; or vice versa
-#        queryset = SmallMoleculeBatch.objects.all()
-#        # to override: resource_name = 'sm'
-#        excludes = []
-#        allowed_methods = ['get']
-#
-##        authentication = MultiAuthentication(BasicAuthentication(), SessionAuthentication())
-#        
-#    def dehydrate(self, bundle):
-#        _filter = lambda field_information: not bundle.obj.is_restricted or field_information.is_unrestricted # or is_authorized
-#        bundle.data = get_detail_bundle(bundle.obj, ['smallmoleculebatch',''], _filter=_filter)
-#        return bundle
-#
-#    def build_schema(self):
-#        schema = super(SmallMoleculeBatchResource,self).build_schema()
-#        schema['fields'] = get_detail_schema(SmallMoleculeBatch(),['smallmoleculebatch'])
-#        return schema 
-#    
-#    def override_urls(self):
-#        """ Note, will be deprecated in >0.9.12; delegate to new method, prepend_urls
-#        """
-#        return self.prepend_urls();
-#    
-#    def prepend_urls(self):
-#
-#        return [
-#            url(r"^(?P<resource_name>%s)/(?P<smallmolecule_id>\d+)\-(?P<facility_batch_id>\d+)/$" % 
-#                self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
-#        ]
         
 
 class CellResource(ModelResource):
     class Meta:
-        # TODO: authorization
-        # TODO: it would be good to feed these from the view/tables2 code; or vice versa
         queryset = Cell.objects.all()
         # to override: resource_name = 'sm'
         allowed_methods = ['get']
         excludes = []
-        filtering = {'date_loaded':ALL, 'date_publicly_available':ALL, 'date_data_received':ALL }
+        filtering = {
+            'date_loaded':ALL, 
+            'date_publicly_available':ALL, 
+            'date_data_received':ALL }
         
     def dehydrate(self, bundle):
         bundle.data = get_detail_bundle(bundle.obj, ['cell',''])
@@ -148,18 +110,21 @@ class CellResource(ModelResource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
     
 class AntibodyResource(ModelResource):
     class Meta:
-        # TODO: authorization
-        # TODO: it would be good to feed these from the view/tables2 code; or vice versa
         queryset = Antibody.objects.all()
         # to override: resource_name = 'sm'
         allowed_methods = ['get']
         excludes = []
-        filtering = {'date_loaded':ALL, 'date_publicly_available':ALL, 'date_data_received':ALL }
+        filtering = {
+            'date_loaded':ALL, 
+            'date_publicly_available':ALL, 
+            'date_data_received':ALL }
         
     def dehydrate(self, bundle):
         bundle.data = get_detail_bundle(bundle.obj, ['antibody',''])
@@ -177,18 +142,21 @@ class AntibodyResource(ModelResource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
     
 class OtherReagentResource(ModelResource):
     class Meta:
-        # TODO: authorization
-        # TODO: it would be good to feed these from the view/tables2 code; or vice versa
         queryset = OtherReagent.objects.all()
         # to override: resource_name = 'sm'
         allowed_methods = ['get']
         excludes = []
-        filtering = {'date_loaded':ALL, 'date_publicly_available':ALL, 'date_data_received':ALL }
+        filtering = {
+            'date_loaded':ALL, 
+            'date_publicly_available':ALL, 
+            'date_data_received':ALL }
         
     def dehydrate(self, bundle):
         bundle.data = get_detail_bundle(bundle.obj, ['otherreagent',''])
@@ -206,18 +174,21 @@ class OtherReagentResource(ModelResource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
     
 class ProteinResource(ModelResource):
     class Meta:
-        # TODO: authorization
-        # TODO: it would be good to feed these from the view/tables2 code; or vice versa
         queryset = Protein.objects.all()
         # to override: resource_name = 'sm'
         allowed_methods = ['get']
         excludes = []
-        filtering = {'date_loaded':ALL, 'date_publicly_available':ALL, 'date_data_received':ALL }
+        filtering = {
+            'date_loaded':ALL, 
+            'date_publicly_available':ALL, 
+            'date_data_received':ALL }
             
     def dehydrate(self, bundle):
         bundle.data = get_detail_bundle(bundle.obj, ['protein',''])
@@ -235,18 +206,21 @@ class ProteinResource(ModelResource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<lincs_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<lincs_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
     
 class LibraryResource(ModelResource):
     class Meta:
-        # TODO: authorization
-        # TODO: it would be good to feed these from the view/tables2 code; or vice versa
         queryset = Library.objects.all()
         # to override: resource_name = 'sm'
         allowed_methods = ['get']
         excludes = []
-        filtering = {'date_loaded':ALL, 'date_publicly_available':ALL, 'date_data_received':ALL }
+        filtering = {
+            'date_loaded':ALL, 
+            'date_publicly_available':ALL, 
+            'date_data_received':ALL }
         
     def dehydrate(self, bundle):
         bundle.data = get_detail_bundle(bundle.obj, ['library',''])
@@ -264,14 +238,17 @@ class LibraryResource(ModelResource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<lincs_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<lincs_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
         
 
 class DataSetResource(ModelResource):
     """
     This version of the database export shows the DatasetData columns serially, 
-    as is specified for the SAF version 0.1 data interchange format for the LIFE system.
+    as is specified for the SAF version 0.1 data interchange format for the 
+    LIFE system.
     """
     absolute_uri = 'http://lincs.hms.harvard.edu/db/api/v1/datasetdata/'
     
@@ -279,8 +256,13 @@ class DataSetResource(ModelResource):
         queryset = DataSet.objects.all() #.filter(is_restricted==False)
         # TODO: authorization
         allowed_methods = ['get']
-        excludes = ['lead_screener_firstname','lead_screener_lastname','lead_screener_email']
-        filtering = {'date_loaded':ALL, 'date_publicly_available':ALL, 'date_data_received':ALL }
+        excludes = [
+            'lead_screener_firstname','lead_screener_lastname',
+            'lead_screener_email']
+        filtering = {
+            'date_loaded':ALL, 
+            'date_publicly_available':ALL, 
+            'date_data_received':ALL }
      
     def dispatch(self, request_type, request, **kwargs):
         """ override in order to be able to grab the request uri
@@ -293,7 +275,8 @@ class DataSetResource(ModelResource):
         _facility_id =str(bundle.data['facility_id'])
         dataset_id = bundle.data['id']
         
-        datasetDataColumns = DataSetDataResource.get_datasetdata_camel_case_columns(dataset_id)
+        datasetDataColumns = \
+            DataSetDataResource.get_datasetdata_camel_case_columns(dataset_id)
         bundle.data = get_detail_bundle(
             bundle.obj, ['dataset',''],
             _override_filter=lambda x: x.show_in_detail or x.field=='bioassay' )
@@ -302,17 +285,23 @@ class DataSetResource(ModelResource):
 
         datacolumns = list( DataColumn.objects.all().filter(dataset_id=dataset_id) )
         # TODO: drive the columns to show here from fieldinformation inputs
-        dc_fieldinformation = FieldInformation.objects.all().filter(table='datacolumn', show_in_detail=True)
+        dc_fieldinformation = \
+            FieldInformation.objects.all().filter(
+                table='datacolumn', show_in_detail=True)
         dc_field_names = [fi.get_camel_case_dwg_name() for fi in dc_fieldinformation]
-        datapoints = [ dict(zip(dc_field_names, [ getattr(x,fi.field) for fi in dc_fieldinformation ] )) for x in datacolumns ]
+        datapoints = [ 
+            dict(zip(dc_field_names, [ 
+                getattr(x,fi.field) for fi in dc_fieldinformation ] )) 
+                for x in datacolumns ]
 
         # Custom fields for SAF: TODO: generate the names here from the fieldinformation
-        bundle.data['datapointFile'] = {'uri': saf_uri,
-                                       'noCols':len(datasetDataColumns),
-                                       'cols':datasetDataColumns,
-                                       'noDatapoints': len(datapoints),
-                                       'datapoints': datapoints
-                                       }
+        bundle.data['datapointFile'] = {
+            'uri': saf_uri,
+            'noCols':len(datasetDataColumns),
+            'cols':datasetDataColumns,
+            'noDatapoints': len(datapoints),
+            'datapoints': datapoints
+            }
         
         bundle.data['safVersion'] = '0.1'  # TODO: drive this from data
         bundle.data['screeningFacility'] = 'HMS' #TODO: drive this from data
@@ -320,19 +309,29 @@ class DataSetResource(ModelResource):
     
     def build_schema(self):
         schema = super(DataSetResource,self).build_schema()
-        original_dict = schema['fields'] # TODO: reincorporate this information (this default information is about the DB schema definition)
+        
+        # TODO: reincorporate this information:
+        # (this default information is about the DB schema definition)
+        original_dict = schema['fields'] 
         fields = get_detail_schema(DataSet(), 'dataset', lambda x: x.show_in_detail )
+
         # Custom fields for SAF: TODO: generate the names here from the fieldinformation
         fields['datapointFile'] = get_schema_fieldinformation('datapoint_file','')
         fields['safVersion'] = get_schema_fieldinformation('saf_version','')
         fields['screeningFacility'] = get_schema_fieldinformation('screening_facility','')
-        schema['fields'] = OrderedDict(sorted(fields.items(), key=lambda x: x[0])) # sort alpha, todo sort on fi.order
+        # sort alpha, todo sort on fi.order
+        schema['fields'] = OrderedDict(
+            sorted(fields.items(), key=lambda x: x[0])) 
         
         ds_fieldinformation = DataSetDataResource.get_datasetdata_column_fieldinformation()
-        ds_fieldinformation.append(('datapoint_value',get_fieldinformation('datapoint_value',[''])) )
-        ds_fieldinformation.append(('timepoint',get_fieldinformation('timepoint',[''])) )
-        ds_fieldinformation.append(('timepoint_unit',get_fieldinformation('timepoint_unit',[''])) )
-        ds_fieldinformation.append(('timepoint_description',get_fieldinformation('timepoint_description',[''])) )
+        ds_fieldinformation.append(
+            ('datapoint_value',get_fieldinformation('datapoint_value',[''])) )
+        ds_fieldinformation.append(
+            ('timepoint',get_fieldinformation('timepoint',[''])) )
+        ds_fieldinformation.append(
+            ('timepoint_unit',get_fieldinformation('timepoint_unit',[''])) )
+        ds_fieldinformation.append(
+            ('timepoint_description',get_fieldinformation('timepoint_description',[''])) )
         
         meta_field_info = get_listing(FieldInformation(),['fieldinformation'])
     
@@ -344,9 +343,12 @@ class DataSetResource(ModelResource):
                 meta_fi = item[1]['fieldinformation']
                 field_schema_info[meta_fi.get_camel_case_dwg_name()] = getattr(fi,meta_fi_attr)
             fields[fi.get_camel_case_dwg_name()]= field_schema_info
-        schema['datasetDataFile'] = OrderedDict(sorted(fields.items(), key=lambda x: x[0])) # sort alpha, todo sort on fi.order
+        # sort alpha, todo sort on fi.order
+        schema['datasetDataFile'] = OrderedDict(
+            sorted(fields.items(), key=lambda x: x[0])) 
 
-        dc_fieldinformation = FieldInformation.objects.all().filter(table='datacolumn', show_in_detail=True)
+        dc_fieldinformation = FieldInformation.objects.all().filter(
+            table='datacolumn', show_in_detail=True)
         datapoint_fields = {}
         for fi in dc_fieldinformation:
             field_schema_info = {}
@@ -355,7 +357,9 @@ class DataSetResource(ModelResource):
                 meta_fi = item[1]['fieldinformation']
                 field_schema_info[meta_fi.get_camel_case_dwg_name()] = getattr(fi,meta_fi_attr)
             datapoint_fields[fi.get_camel_case_dwg_name()]= field_schema_info
-        schema['datapointInformation'] = OrderedDict(sorted(datapoint_fields.items(), key=lambda x: x[0])) # sort alpha, todo sort on fi.order
+        # sort alpha, todo sort on fi.order
+        schema['datapointInformation'] = OrderedDict(
+            sorted(datapoint_fields.items(), key=lambda x: x[0])) 
         
         return schema 
     
@@ -366,7 +370,9 @@ class DataSetResource(ModelResource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
 
 
@@ -384,8 +390,8 @@ def camel_case(string):
 
 class CursorSerializer(Serializer):
     """
-    A simple serializer that takes a cursor, queries it for its columns, and outputs 
-    this as either CSV or JSON.
+    A simple serializer that takes a cursor, queries it for its columns, and 
+    outputs this as either CSV or JSON.
     (The CSV output is used with SAF)
     """
     
@@ -398,9 +404,6 @@ class CursorSerializer(Serializer):
         'csv': 'text/csv',
     }
 
-#    def get_saf_columns(self, query):
-#        return ['one','two', 'three']
-    
     def to_csv(self, cursor, options=None):
         logger.info(str(('typeof the object sent to_csv',type(cursor))))
         raw_data = StringIO.StringIO()
@@ -411,10 +414,6 @@ class CursorSerializer(Serializer):
             raw_data.writelines(('error_message\n',cursor['error_message'],'\n'))
             return raw_data.getvalue() 
         
-        # no response header needed?
-        #        response = HttpResponse(mimetype='text/csv')
-        #        response['Content-Disposition'] = 'attachment; filename=%s.csv' % unicode('test.output').replace('.', '_')
-        #        raw_data.write(response)
         writer = csv.writer(raw_data)
         i=0
         cols = [col[0] for col in cursor.description]
@@ -438,7 +437,6 @@ class CursorSerializer(Serializer):
     def to_json(self,cursor, options=None):
         
         logger.info(str(('typeof the object sent to_json',type(cursor))))
-#        logger.info(str(('to_csv for SAF for cursor', cursor)))
         raw_data = StringIO.StringIO()
                 
         # this is an unexpected way to get this error, look into tastypie sequence calls
@@ -447,7 +445,7 @@ class CursorSerializer(Serializer):
             raw_data.writelines(('error_message\n',cursor['error_message'],'\n'))
             return raw_data.getvalue() 
         elif isinstance(cursor,dict) :
-            # then in this case, this is a non-error dict, probably for the schema, dump and return.
+            # In this case, this is a non-error dict, probably for the schema, dump and return.
             raw_data.writelines(json.dumps(cursor))
             return raw_data.getvalue()
         # TODO: sort the fields?
@@ -458,8 +456,9 @@ class CursorSerializer(Serializer):
         for row in cursor.fetchall():
             if i!=0:
                 raw_data.write(',\n')
-            raw_data.write(json.dumps(OrderedDict(zip(cols, row)),skipkeys=False,ensure_ascii=True,check_circular=True, allow_nan=True, cls=DjangoJSONEncoder))
-            #            raw_data.write(json.dumps(dict(zip(cols, row))))
+            raw_data.write(json.dumps(OrderedDict(zip(cols, row)),
+                skipkeys=False,ensure_ascii=True,check_circular=True, 
+                allow_nan=True, cls=DjangoJSONEncoder))
             i += 1
         raw_data.write(']')
 
@@ -487,14 +486,14 @@ class CursorSerializer(Serializer):
         #for item in csv.DictReader(raw_data):
         #    data.append(item)
         #return data
-        
 
 
 class DataSetDataResource(Resource):
     """
     This version of the database export shows the DatasetData columns serially,
     except for the timepoint columns (which are still flattened),
-    as is specified for the SAF version 0.1 data interchange format for the LIFE system.
+    as is specified for the SAF version 0.1 data interchange format for the 
+    LIFE system.
     
     This class is a complete override of the read functionality of tastypie; 
     because serializing the dataset data is not possible using ORM code.
@@ -510,11 +509,14 @@ class DataSetDataResource(Resource):
         """
         A hook to generate the list of available objects.
         override tastypie.resources.Resource
-        - we do this because this is a custom resource (not, for instance, a ModelResource)
+        - we do this because this is a custom resource (not, for instance, 
+        a ModelResource)
         Note: this function will hand off to the Serializer.
         """
         logger.info(str(('get_object_list', request.path, request.GET)))
-        matchObject = re.match(r'.*datasetdata/(\d+)/', request.path) # TODO: there must be a way to get the request path variable automagically
+        # TODO: there must be a way to get the request path variable automagically
+        # TODO: should override get_list
+        matchObject = re.match(r'.*datasetdata/(\d+)/', request.path) 
         if(matchObject):
             facility_id = matchObject.group(1)
             try:
@@ -524,7 +526,6 @@ class DataSetDataResource(Resource):
                     raise Http401
                 
                 return self.get_datasetdata_cursor(dataset.id)
-            
             
             except DataSet.DoesNotExist, e:
                 logger.error(str(('no such facility id', facility_id)))
@@ -543,12 +544,14 @@ class DataSetDataResource(Resource):
         return datacolumns
 
     @staticmethod
-    def get_datasetdata_column_fieldinformation(): #TODO: is this cached by python?
+    def get_datasetdata_column_fieldinformation(): 
+        #TODO: is this cached by python?
         """
         returns a list of [('table.field', fieldinformation )]
         """
         # TODO: only include cell, protein if they are present in the dataset
-        # Note, case is erased when cursor.description is filled, so use underscores, and leave the camelcasing for later
+        # Note, case is erased when cursor.description is filled, so use 
+        # underscores, and leave the camelcasing for later
         
         table_fields = ['datarecord.id',
                         'dataset.facility_id',
@@ -570,17 +573,21 @@ class DataSetDataResource(Resource):
         tablefields_fi = [];
         for tablefield in table_fields:
             tflist = tablefield.split('.') 
-            tablefields_fi.append((tablefield, get_fieldinformation(tflist[1],[tflist[0]])))
+            tablefields_fi.append(
+                (tablefield, get_fieldinformation(tflist[1],[tflist[0]])) )
             
         return tablefields_fi
     
     @staticmethod
     def get_datasetdata_camel_case_columns(dataset_id):
-        camel_columns = [x[1].get_camel_case_dwg_name() 
-                         for x in DataSetDataResource.get_datasetdata_column_fieldinformation()]
-        timepoint_columns = DataSetDataResource.get_dataset_columns(dataset_id, ['day','hour','minute','second'])
+        camel_columns = [
+            x[1].get_camel_case_dwg_name() 
+            for x in DataSetDataResource.get_datasetdata_column_fieldinformation()]
+        timepoint_columns = DataSetDataResource.get_dataset_columns(
+            dataset_id, ['day','hour','minute','second'])
         for i in xrange(len(timepoint_columns)):
-            camel_columns.append('timepoint'+ ('','_'+str(i))[i>0]) # FYI we have to label manually, because timepoint is an alias, not real DataColumn
+            # FYI we have to label manually, because timepoint is an alias, not real DataColumn
+            camel_columns.append('timepoint'+ ('','_'+str(i))[i>0]) 
             camel_columns.append('timepoint_unit'+ ('','_'+str(i))[i>0])
             camel_columns.append('timepoint_description'+ ('','_'+str(i))[i>0])
         datapoint_value_fi = get_fieldinformation('datapoint_value', ['']) 
@@ -589,10 +596,12 @@ class DataSetDataResource(Resource):
                      
     @staticmethod
     def get_datasetdata_cursor(dataset_id):
-        timepoint_columns = DataSetDataResource.get_dataset_columns(dataset_id, ['day','hour','minute','second'])
+        timepoint_columns = DataSetDataResource.get_dataset_columns(
+            dataset_id, ['day','hour','minute','second'])
         logger.info(str(('timepoint_columns', timepoint_columns)))
         datapoint_columns = DataSetDataResource.get_dataset_columns(dataset_id)
-        datapoint_columns = [col for col in datapoint_columns if col not in timepoint_columns]
+        datapoint_columns = [
+            col for col in datapoint_columns if col not in timepoint_columns]
         
         # pivot out the timepoint columns only
         timepoint_column_string = '';
@@ -607,13 +616,13 @@ class DataSetDataResource(Resource):
                 tp_unit_name += "_" + str(i)
                 tp_desc_name += "_" + str(i)
 
-            # note: timepoint values are probably text, but who knows, so query the type here
             column_to_select = None
             if(dc.data_type == 'Numeric' or dc.data_type == 'omero_image'):
                 if dc.precision == 0 or dc.data_type == 'omero_image':
                     column_to_select = "int_value"
                 else:
-                    column_to_select = "round( float_value::numeric, 2 )" # TODO: specify the precision in the fieldinformation for this column
+                    # TODO: specify the precision in the fieldinformation
+                    column_to_select = "round( float_value::numeric, 2 )" 
             else:
                 column_to_select = "text_value"
             timepoint_column_string += (    
@@ -624,18 +633,19 @@ class DataSetDataResource(Resource):
             if dc.description:
                 timepoint_column_string += ", '" + dc.description  + "' as " + tp_desc_name
         
-
-             
         sql = "select "
-        # patterns to match the protein and cell fields, which will be handled differently below,
-        # because they can be linked through the DataRecord or the DataColumn
+        # Specify patterns to match the protein and cell fields, which will
+        # be handled differently below, because they can be linked through the 
+        # DataRecord or the DataColumn
         protein_pattern = re.compile(r'protein.(.*)') 
         cell_pattern = re.compile(r'cell.(.*)')
-        meta_columns_to_fieldinformation = DataSetDataResource.get_datasetdata_column_fieldinformation()
+        meta_columns_to_fieldinformation = \
+            DataSetDataResource.get_datasetdata_column_fieldinformation()
         for i,(tablefield,fi) in enumerate(meta_columns_to_fieldinformation):
             if i!=0: 
                 sql += ', \n'
-            # NOTE: Due to an updated requirement, proteins, cells may be linked to either datarecords, or datacolumns, 
+            # NOTE: Due to an updated requirement, proteins & cells may be 
+            # linked to either datarecords, or datacolumns, 
             # so the following ugliness ensues
             m = protein_pattern.match(tablefield)
             m2 = cell_pattern.match(tablefield)
@@ -651,16 +661,20 @@ class DataSetDataResource(Resource):
                 # TODO: this information is parsed when deserializing to create the "camel cased name"
                 sql += tablefield + ' as "' + fi.get_camel_case_dwg_name() +'"' 
         datapoint_value_fi = get_fieldinformation('datapoint_value', [''])  
-        sql += ', coalesce(dp.int_value::TEXT, dp.float_value::TEXT, dp.text_value) as "' + datapoint_value_fi.get_camel_case_dwg_name() +'"\n'
+        sql += ( ', coalesce(dp.int_value::TEXT, dp.float_value::TEXT, dp.text_value) as "' + 
+            datapoint_value_fi.get_camel_case_dwg_name() +'"\n')
             
         sql += timepoint_column_string
         
         # Note: older simple left join to proteins
-        #             left join db_protein protein on (datarecord.protein_id=protein.id)
+        #   left join db_protein protein on (datarecord.protein_id=protein.id)
         # Also, cells:
-        #            left join db_cell cell on (datarecord.cell_id=cell.id)
+        #     left join db_cell cell on (datarecord.cell_id=cell.id)
         # has been replaced to 
-        #            left join ( select datarecord.id as dr_id, * from db_protein p where p.id in (datarecord.protein_id,datacolumn.protein_id)) protein on(dr_id=datarecord.id)
+        #     left join ( 
+        #        select datarecord.id as dr_id, * from db_protein p 
+        #        where p.id in (datarecord.protein_id,datacolumn.protein_id)) protein 
+        #        on(dr_id=datarecord.id)
         sql += """
             from db_dataset dataset 
             join db_datarecord datarecord on(datarecord.dataset_id=dataset.id) 
@@ -674,25 +688,30 @@ class DataSetDataResource(Resource):
             and dataset.id = %s 
             """
         if len(timepoint_columns) > 0: 
-            sql += " and datacolumn.id not in (" + ','.join([str(col.id) for col in timepoint_columns]) + ") "    
+            sql += (" and datacolumn.id not in (" + 
+                ','.join([str(col.id) for col in timepoint_columns]) + ") ")    
         sql += " order by datarecord.id, datacolumn.id "
         
         logger.info(str(('sql',sql)))
         cursor = connection.cursor()
         cursor.execute(sql, [dataset_id])
-        #                query = DataRecord.objects.filter(dataset_id=dataset_id)
-        #                logger.info(str(('query returns', query)))
         return cursor
 
     def build_schema(self):
         schema = super(DataSetDataResource,self).build_schema()
-        original_dict = schema['fields'] # TODO: reincorporate this information (this default information is about the DB schema definition)
+        # TODO: reincorporate this information (this default information is 
+        # about the DB schema definition)
+        original_dict = schema['fields'] 
 
         ds_fieldinformation = DataSetDataResource.get_datasetdata_column_fieldinformation()
-        ds_fieldinformation.append(('datapoint_value',get_fieldinformation('datapoint_value',[''])) )
-        ds_fieldinformation.append(('timepoint',get_fieldinformation('timepoint',[''])) )
-        ds_fieldinformation.append(('timepoint_unit',get_fieldinformation('timepoint_unit',[''])) )
-        ds_fieldinformation.append(('timepoint_description',get_fieldinformation('timepoint_description',[''])) )
+        ds_fieldinformation.append(
+            ('datapoint_value',get_fieldinformation('datapoint_value',[''])) )
+        ds_fieldinformation.append(
+            ('timepoint',get_fieldinformation('timepoint',[''])) )
+        ds_fieldinformation.append(
+            ('timepoint_unit',get_fieldinformation('timepoint_unit',[''])) )
+        ds_fieldinformation.append(
+            ('timepoint_description',get_fieldinformation('timepoint_description',[''])) )
         
         meta_field_info = get_listing(FieldInformation(),['fieldinformation'])
     
@@ -704,7 +723,8 @@ class DataSetDataResource(Resource):
                 meta_fi = item[1]['fieldinformation']
                 field_schema_info[meta_fi.get_camel_case_dwg_name()] = getattr(fi,meta_fi_attr)
             fields[fi.get_camel_case_dwg_name()]= field_schema_info
-        schema['fields'] = OrderedDict(sorted(fields.items(), key=lambda x: x[0])) # TODO, use the fieldinformation order
+        # TODO: sorting alpha: use the fieldinformation order
+        schema['fields'] = OrderedDict(sorted(fields.items(), key=lambda x: x[0])) 
         
         return schema 
     
@@ -727,7 +747,9 @@ class DataSetDataResource(Resource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
     
     def dehydrate(self, bundle):
@@ -736,24 +758,24 @@ class DataSetDataResource(Resource):
 
 class DataSetFlattenedResource(ModelResource):
     """
-    This version of the database export shows the DatasetData columns in a pivoted, flattened table,
-    in the same form as the web UI
+    This version of the database export shows the DatasetData columns in a 
+    pivoted, flattened table, in the same form as the web UI
     """
     absolute_uri = 'http://lincs.hms.harvard.edu/db/api/v1/datasetdata/'
     
     class Meta:
         queryset = DataSet.objects.all() #.filter(is_restricted==False)
-        # TODO: authorization
-        # TODO: it would be good to feed these from the view/tables2 code; or vice versa
         allowed_methods = ['get']
-        excludes = ['lead_screener_firstname','lead_screener_lastname','lead_screener_email']
+        excludes = ['lead_screener_firstname','lead_screener_lastname',
+            'lead_screener_email']
 
     def dispatch(self, request_type, request, **kwargs):
         """ override in order to be able to grab the request uri
         """
         
         self.absolute_uri = request.build_absolute_uri()
-        return super(DataSetFlattenedResource,self).dispatch(request_type, request, **kwargs)  
+        return super(DataSetFlattenedResource,self).dispatch(
+            request_type, request, **kwargs)  
          
     def dehydrate(self, bundle):
         # TODO: the following call executes the query *just* to get the column names
@@ -762,10 +784,11 @@ class DataSetFlattenedResource(ModelResource):
         bundle.data = get_detail_bundle(bundle.obj, ['dataset',''])
         saf_uri = self.absolute_uri.replace('dataset','datasetdata')
         saf_uri = saf_uri.replace('json','csv');
-        bundle.data['datapointFile'] = {'uri': saf_uri,
-                                       'noCols':len(visibleColumns),
-                                       'cols':visibleColumns.values()
-                                       }
+        bundle.data['datapointFile'] = {
+            'uri': saf_uri,
+            'noCols':len(visibleColumns),
+            'cols':visibleColumns.values()
+            }
         return bundle
 
     def build_schema(self):
@@ -781,7 +804,9 @@ class DataSetFlattenedResource(ModelResource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
 
     
@@ -800,7 +825,9 @@ class DataSetDataFlattenedResource(Resource):
         serializer = DjangoTables2Serializer()
     
     def get_object_list(self, request):
-        matchObject = re.match(r'.*datasetdata/(\d+)/', request.path) # TODO: there must be a way to get the request path variable automagically
+        # TODO: there must be a way to get the request path variable automagically
+        # TODO: should override get_list
+        matchObject = re.match(r'.*datasetdata/(\d+)/', request.path) 
         if(matchObject):
             facility_id = matchObject.group(1)
             try:
@@ -847,7 +874,9 @@ class DataSetDataFlattenedResource(Resource):
     
     def prepend_urls(self):
         return [
-            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" % self._meta.resource_name, self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
+            url(r"^(?P<resource_name>%s)/(?P<facility_id>\d+)/$" 
+                % self._meta.resource_name, 
+                self.wrap_view('dispatch_detail'), name="api_dispatch_detail"),
         ]
     
     def dehydrate(self, bundle):

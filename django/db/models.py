@@ -178,17 +178,18 @@ class FieldsManager(models.Manager):
         """
         table = model._meta.module_name
         # Only text or char fields considered, must add numeric fields manually
-        fields = map(lambda x: x.column, filter(lambda x: isinstance(x, models.CharField) or isinstance(x, models.TextField), tuple(model._meta.fields)))
+        fields = map(
+            lambda x: x.column, 
+            filter(lambda x: isinstance(x, models.CharField) 
+                or isinstance(x, models.TextField), 
+                tuple(model._meta.fields)))
         final_fields = []
         for fi in self.get_table_fields(table):
-            if(fi.use_for_search_index and fi.field in fields):  final_fields.append(fi)
+            if(fi.use_for_search_index and fi.field in fields):  
+                final_fields.append(fi)
         logger.debug(str(('get_search_fields for ',model,'returns',final_fields)))
         return final_fields
 
-PUBCHEM_TYPE_IDENTITY = 'identity'
-PUBCHEM_TYPE_SUBSTRUCTURE = 'substructure'
-PUBCHEM_TYPES = ((PUBCHEM_TYPE_IDENTITY, PUBCHEM_TYPE_IDENTITY),
-                 (PUBCHEM_TYPE_SUBSTRUCTURE, PUBCHEM_TYPE_SUBSTRUCTURE),)
 
 class PubchemRequest(models.Model):
     sm_facility_ids = _TEXT(**_NULLOKSTR)
@@ -197,13 +198,10 @@ class PubchemRequest(models.Model):
     type    = _TEXT( null=False)
     pubchem_error_message = _TEXT( **_NULLOKSTR )
     error_message = _TEXT( **_NULLOKSTR )
-#    type    = models.CharField(null=True, max_length=12,
-#                               choices=PUBCHEM_TYPES,
-#                               default=PUBCHEM_TYPE_IDENTITY)
     date_time_fullfilled = models.DateTimeField(null=True) 
     date_time_processing = models.DateTimeField(null=True) 
     date_time_requested = models.DateTimeField(null=False, default=timezone.now ) 
-    # note, don't actually call the datetime.date.today function, since in this case it serves as a function pointer
+
     class Meta:
         unique_together = (('smiles', 'molfile','type'))    
 
@@ -215,8 +213,12 @@ class PubchemRequest(models.Model):
                         self.date_time_requested, self.date_time_fullfilled ))
     
 
-# proposed class to capture all of the DWG information - and to map fields to these database tables
 class FieldInformation(models.Model):
+    '''
+    Meta information for visible fields:
+    - from the LINCS DWG
+    - map fields to these database tables
+    '''
     manager                 = FieldsManager()
     objects                 = models.Manager() # default manager
     
@@ -224,12 +226,12 @@ class FieldInformation(models.Model):
     field                   = _CHAR(max_length=35, **_NULLOKSTR)
     alias                   = _CHAR(max_length=35, **_NULLOKSTR)
     queryset                = _CHAR(max_length=35, **_NULLOKSTR)
-    show_in_detail          = models.BooleanField(default=False, null=False) # Note: default=False are not set at the db level, only at the Db-api level
-    show_in_list            = models.BooleanField(default=False, null=False) # Note: default=False are not set at the db level, only at the Db-api level
-    show_as_extra_field     = models.BooleanField(default=False, null=False) # Note: default=False are not set at the db level, only at the Db-api level
+    show_in_detail          = models.BooleanField(default=False, null=False) 
+    show_in_list            = models.BooleanField(default=False, null=False) 
+    show_as_extra_field     = models.BooleanField(default=False, null=False) 
     order                   = _INTEGER(null=False)
-    is_lincs_field          = models.BooleanField(default=False, null=False) # Note: default=False are not set at the db level, only at the Db-api level
-    use_for_search_index    = models.BooleanField(default=False) # Note: default=False are not set at the db level, only at the Db-api level
+    is_lincs_field          = models.BooleanField(default=False, null=False) 
+    use_for_search_index    = models.BooleanField(default=False) 
     dwg_version             = _CHAR(max_length=35,**_NULLOKSTR)
     unique_id               = _CHAR(max_length=35,null=False,unique=True)
     dwg_field_name              = _TEXT(**_NULLOKSTR) # LINCS name for display
@@ -242,10 +244,13 @@ class FieldInformation(models.Model):
     ontology_reference      = _TEXT(**_NULLOKSTR)
     additional_notes        = _TEXT(**_NULLOKSTR)
     is_unrestricted         = models.BooleanField(default=False, null=False)
+    
     class Meta:
         unique_together = (('table', 'field','queryset'),('field','alias'))    
+    
     def __unicode__(self):
-        return unicode(str((self.table, self.field, self.unique_id, self.dwg_field_name, self.hms_field_name)))
+        return unicode(str((self.table, self.field, self.unique_id, 
+            self.dwg_field_name, self.hms_field_name)))
     
     def get_field_name(self):
         if(self.hms_field_name != None):
@@ -283,14 +288,16 @@ class FieldInformation(models.Model):
             #logger.info(str(('field_name:',field_name)))
             return field_name
         else:
-            logger.error(str(('There is an issue with the field name: ',self.dwg_field_name,self.hms_field_name)))
+            logger.error(str(('There is an issue with the field name: ',
+                self.dwg_field_name,self.hms_field_name)))
             return self.field
     
     def get_dwg_name_hms_name(self):
         field_name = self.dwg_field_name        
         if not field_name or len(field_name)==0 : field_name = self.hms_field_name
         if not field_name or len(field_name)==0 :
-            logger.error(str(('There is an issue with the field name: ',self.dwg_field_name,self.hms_field_name)))
+            logger.error(str(('There is an issue with the field name: ',
+                self.dwg_field_name,self.hms_field_name)))
             return self.field
         return field_name
     
@@ -299,11 +306,9 @@ class FieldInformation(models.Model):
         field_name = self.get_dwg_name_hms_name()
         field_name = field_name.strip().title()
         # TODO: convert a trailing "Id" to "ID"
-        field_name = ''.join(['ID' if x.lower()=='id' else x for x in re.split(r'[_\s]+',field_name)])
-        
-        #field_name = re.sub(r'[_\s]+','',field_name)
+        field_name = ''.join([
+            'ID' if x.lower()=='id' else x for x in re.split(r'[_\s]+',field_name)])
         field_name = field_name[0].lower() + field_name[1:];
-        #        logger.info(str(('created camel case name', field_name, 'for', self)))
         return field_name
 
 class QCEvent(models.Model):
@@ -357,15 +362,19 @@ class SmallMolecule(models.Model):
     _inchi_key               = _TEXT(db_column='inchi_key', **_NULLOKSTR)
     _smiles                  = _TEXT( db_column='smiles', **_NULLOKSTR)
     software                = _TEXT(**_NULLOKSTR)
-    # Following fields not listed for the canonical information in the DWG, but per HMS policy will be - sde4
-    _molecular_mass          = models.DecimalField(db_column='molecular_mass', max_digits=8, decimal_places=2, null=True) # Note: FloatField results in a (postgres) double precision datatype - 8 bytes; approx 15 digits of decimal precision
+    # Following fields not listed for the canonical information in the DWG, 
+    # but per HMS policy will be - sde4
+    # Note: FloatField results in a (postgres) double precision datatype - 8 bytes; 
+    # approx 15 digits of decimal precision
+    _molecular_mass          = models.DecimalField(
+        db_column='molecular_mass', max_digits=8, decimal_places=2, null=True)
     _molecular_formula       = _TEXT(db_column='molecular_formula', **_NULLOKSTR)
     # concentration          = _CHAR(max_length=35, **_NULLOKSTR)
     #plate                   = _INTEGER(null=True)
     #row                     = _CHAR(max_length=1, **_NULLOKSTR)
     #column                  = _INTEGER(null=True)
     #well_type               = _CHAR(max_length=35, **_NULLOKSTR)
-    is_restricted           = models.BooleanField(default=False) # Note: default=False are not set at the db level, only at the Db-api level
+    is_restricted           = models.BooleanField(default=False) 
 
     class Meta:
         unique_together = ('facility_id', 'salt_id')    
@@ -430,10 +439,9 @@ class SmallMoleculeBatch(models.Model):
     purity                  = _TEXT(**_NULLOKSTR)
     purity_method           = _TEXT(**_NULLOKSTR)
     aqueous_solubility      = models.DecimalField(max_digits=4, decimal_places=2, null=True)
-    aqueous_solubility_unit = models.CharField(null=True,
-                                               max_length=2,
-                                      choices=CONCENTRATION_WEIGHT_VOLUME_CHOICES,
-                                      default=CONCENTRATION_MGML)
+    aqueous_solubility_unit = models.CharField(
+        null=True,max_length=2,choices=CONCENTRATION_WEIGHT_VOLUME_CHOICES,
+        default=CONCENTRATION_MGML)
     date_data_received      = models.DateField(null=True,blank=True)
     date_loaded             = models.DateField(null=True,blank=True)
     date_publicly_available = models.DateField(null=True,blank=True)
@@ -444,7 +452,7 @@ class SmallMoleculeBatch(models.Model):
     smiles                  = _TEXT(**_NULLOKSTR)
 
     def __unicode__(self):
-        return unicode(str((self.smallmolecule,self.facility_batch_id)))
+        return unicode(str((self.smallmolecule, self.facility_batch_id)))
     class Meta:
         unique_together = ('smallmolecule', 'facility_batch_id',)    
 
@@ -452,70 +460,39 @@ class SmallMoleculeBatch(models.Model):
         "Returns the 'facilty_id-salt_id'"
         return '%s-%s' % (self.smallmolecule.facility_salt, self.facility_batch_id)
     
-    facility_salt_batch = property(_get_facility_salt_batch)    
+    facility_salt_batch = property(_get_facility_salt_batch)   
+     
 
 class Cell(models.Model):
-    # ----------------------------------------------------------------------------------------------------------------------
-    #                                                                          EXAMPLE VALUES:
-    # ----------------------------------------------------------------------------------------------------------------------
     facility_id                    = _CHAR(max_length=_FACILITY_ID_LENGTH, unique=True, **_NOTNULLSTR)
-    name                           = _CHAR(max_length=35, unique=True, **_NOTNULLSTR)    # 5637
-    cl_id                          = _CHAR(max_length=35, **_NULLOKSTR)     # CLO_0003703
-    alternate_name                 = _CHAR(max_length=35, **_NULLOKSTR)     # CaSki
-    alternate_id                   = _CHAR(max_length=50, **_NULLOKSTR)     # COSMIC:687452
-    center_name                    = _CHAR(max_length=20, **_NOTNULLSTR)    # HMS
-    center_specific_id             = _CHAR(max_length=15, **_NOTNULLSTR)    # HMSL50001
-    mgh_id                         = _CHAR(max_length=15, **_NULLOKSTR)     # 6
-    assay                          = _TEXT(**_NULLOKSTR)                    # Mitchison Mitosis-apoptosis Img; Mitchison 
-                                                                            # Prolif-Mitosis Img; Mitchison 2-3 color apo
-                                                                            # pt Img
-    organism                       = _CHAR(max_length=35, **_NOTNULLSTR)    # Homo sapiens
-    organ                          = _CHAR(max_length=35, **_NOTNULLSTR)    # urinary bladder
-    tissue                         = _CHAR(max_length=35, **_NULLOKSTR)     #
-    cell_type                      = _CHAR(max_length=35, **_NULLOKSTR)     # epithelial
-    cell_type_detail               = _CHAR(max_length=35, **_NULLOKSTR)     # epithelial immortalized with hTERT
-    disease                        = _TEXT(**_NOTNULLSTR)                   # transitional cell carcinoma
-    disease_detail                 = _TEXT(**_NULLOKSTR)                    #
-    growth_properties              = _TEXT(**_NOTNULLSTR)                   # adherent
-    genetic_modification           = _CHAR(max_length=35, **_NULLOKSTR)     # none
-    related_projects               = _CHAR(max_length=35, **_NULLOKSTR)     #
-    recommended_culture_conditions = _TEXT(**_NULLOKSTR)                    # From MGH/CMT as specified by cell provider:
-                                                                               # RPMI 1640 medium with 2 mM L-glutamine adju
-                                                                               # sted to contain 1.5 g/L sodium bicarbonate,
-                                                                               #  4.5 g/L glucose, 10 mM HEPES, and 1.0 mM s
-                                                                               # odium pyruvate, 90%; fetal bovine serum, 10
-                                                                               # %. Protocol: Remove medium, and rinse with 
-                                                                               # 0.25% trypsin, 0.03% EDTA solution. Remove 
-                                                                               # the solution and add an additional 1 to 2 m
-                                                                               # l of trypsin-EDTA solution. Allow the flask
-                                                                               #  to sit at room temperature (or at 37C) unt
-                                                                               # il the cells detach. Add fresh culture medi
-                                                                               # um, aspirate and dispense into new culture 
-                                                                               # flasks.\012Subcultivation ratio: A subculti
-                                                                               # vation ratio of 1:4 to 1:8 is recommended
-                                                                               # \012\012
-    verification_reference_profile = _TEXT(**_NULLOKSTR)                    # DNA Profile (STR, source: ATCC):\012Ameloge
-                                                                               # nin: X,Y \012CSF1PO: 11 \012D13S317: 11 \01
-                                                                               # 2D16S539: 9 \012D5S818: 11,12 \012D7S820: 1
-                                                                               # 0,11 \012THO1: 7,9 \012TPOX: 8,9 \012vWA: 1
-                                                                               # 6,18
-    mutations_reference            = _TEXT(**_NULLOKSTR)                    # http://www.sanger.ac.uk/perl/genetics/CGP/c
-                                                                               # ore_line_viewer?action=sample&id=687452
-    mutations_explicit             = _TEXT(**_NULLOKSTR)                    # Mutation data source: Sanger, Catalogue Of 
-                                                                               # Somatic Mutations In Cancer: Gene: RB1, \012
-                                                                               # AA mutation: p.Y325* (Substitution - Nonsen
-                                                                               # se), \012CDS mutation: c.975T>A (Substituti
-                                                                               # on); \012\012Gene: TP53, \012AA mutation: p
-                                                                               # .R280T (Substitution - Missense), \012CDS m
-                                                                               # utation: c.839G>C (Substitution)
-    organism_gender                = _CHAR(max_length=35, **_NULLOKSTR)     # male
+    name                           = _CHAR(max_length=35, unique=True, **_NOTNULLSTR)    
+    cl_id                          = _CHAR(max_length=35, **_NULLOKSTR)     
+    alternate_name                 = _CHAR(max_length=35, **_NULLOKSTR)     
+    alternate_id                   = _CHAR(max_length=50, **_NULLOKSTR)    
+    center_name                    = _CHAR(max_length=20, **_NOTNULLSTR)   
+    center_specific_id             = _CHAR(max_length=15, **_NOTNULLSTR)   
+    mgh_id                         = _CHAR(max_length=15, **_NULLOKSTR)
+    assay                          = _TEXT(**_NULLOKSTR)                    
+    organism                       = _CHAR(max_length=35, **_NOTNULLSTR)    
+    organ                          = _CHAR(max_length=35, **_NOTNULLSTR)    
+    tissue                         = _CHAR(max_length=35, **_NULLOKSTR)     
+    cell_type                      = _CHAR(max_length=35, **_NULLOKSTR)     
+    cell_type_detail               = _CHAR(max_length=35, **_NULLOKSTR)     
+    disease                        = _TEXT(**_NOTNULLSTR)                   
+    disease_detail                 = _TEXT(**_NULLOKSTR)                    
+    growth_properties              = _TEXT(**_NOTNULLSTR)                  
+    genetic_modification           = _CHAR(max_length=35, **_NULLOKSTR)     
+    related_projects               = _CHAR(max_length=35, **_NULLOKSTR)     
+    recommended_culture_conditions = _TEXT(**_NULLOKSTR)                    
+    verification_reference_profile = _TEXT(**_NULLOKSTR)                   
+    mutations_reference            = _TEXT(**_NULLOKSTR)                    
+    mutations_explicit             = _TEXT(**_NULLOKSTR)                    
+    organism_gender                = _CHAR(max_length=35, **_NULLOKSTR)     
     date_data_received      = models.DateField(null=True,blank=True)
     date_loaded             = models.DateField(null=True,blank=True)
     date_publicly_available = models.DateField(null=True,blank=True)
     date_updated            = models.DateField(null=True,blank=True)
     is_restricted                     = models.BooleanField()
-
-    # ----------------------------------------------------------------------------------------------------------------------
     def __unicode__(self):
         return unicode(self.facility_id)
 
@@ -542,7 +519,8 @@ class CellBatch(models.Model):
 class Protein(models.Model):
     name                = _TEXT(**_NOTNULLSTR)
     lincs_id            = _CHAR(max_length=_FACILITY_ID_LENGTH, unique=True, **_NOTNULLSTR)
-    uniprot_id          = _CHAR(max_length=13, **_NULLOKSTR) # Note: UNIPROT ID's are 6 chars long, but we have a record with two in it, see issue #74
+    # Note: UNIPROT ID's are 6 chars long, but we have a record with two in it, see issue #74
+    uniprot_id          = _CHAR(max_length=13, **_NULLOKSTR) 
     alternate_name      = _TEXT(**_NULLOKSTR)
     alternate_name_2    = _TEXT(**_NULLOKSTR)
     provider            = _TEXT(**_NULLOKSTR)
@@ -558,9 +536,9 @@ class Protein(models.Model):
     mutation            = _TEXT(**_NULLOKSTR) 
     protein_purity      = _TEXT(**_NULLOKSTR)
     protein_complex     = _TEXT(**_NULLOKSTR)
-    isoform             = _CHAR(max_length=5, **_NULLOKSTR) #TODO: Shall this be boolean?
-    protein_type        = _CHAR(max_length=35, **_NULLOKSTR) #TODO: controlled vocabulary
-    source_organism     = _CHAR(max_length=35, **_NULLOKSTR) #TODO: controlled vocabulary
+    isoform             = _CHAR(max_length=5, **_NULLOKSTR) 
+    protein_type        = _CHAR(max_length=35, **_NULLOKSTR)
+    source_organism     = _CHAR(max_length=35, **_NULLOKSTR)
     reference           = _TEXT(**_NULLOKSTR)
     date_data_received      = models.DateField(null=True,blank=True)
     date_loaded             = models.DateField(null=True,blank=True)
@@ -577,14 +555,15 @@ class Antibody(models.Model):
     name                    = _TEXT(**_NOTNULLSTR)
     alternative_names       = _TEXT(**_NULLOKSTR) 
     target_protein_name     = _TEXT(**_NULLOKSTR) 
-    target_protein_uniprot_id       = _CHAR(max_length=13, **_NULLOKSTR) # Note: UNIPROT ID's are 6 chars long, but we have a record with two in it, see issue #74
+    # Note: UNIPROT ID's are 6 chars long, but we have a record with two in it, see issue #74
+    target_protein_uniprot_id       = _CHAR(max_length=13, **_NULLOKSTR) 
     target_gene_name      = _CHAR(max_length=35, **_NULLOKSTR)
     target_gene_id          = _CHAR(max_length=35, **_NULLOKSTR)
-    target_organism         = _CHAR(max_length=35, **_NULLOKSTR) #TODO: controlled vocabulary
+    target_organism         = _CHAR(max_length=35, **_NULLOKSTR)
     immunogen               = _TEXT(**_NULLOKSTR) 
     immunogen_sequence      = _TEXT(**_NULLOKSTR) 
     antibody_clonality      = _TEXT(**_NULLOKSTR) 
-    source_organism         = _CHAR(max_length=35, **_NULLOKSTR) #TODO: controlled vocabulary
+    source_organism         = _CHAR(max_length=35, **_NULLOKSTR)
     antibody_isotype        = _CHAR(max_length=35, **_NULLOKSTR)
     engineering             = _TEXT(**_NULLOKSTR) 
     antibody_purity         = _TEXT(**_NULLOKSTR) 
@@ -596,7 +575,7 @@ class Antibody(models.Model):
     date_loaded             = models.DateField(null=True,blank=True)
     date_publicly_available = models.DateField(null=True,blank=True)
     date_updated            = models.DateField(null=True,blank=True)
-    is_restricted           = models.BooleanField(default=False) # Note: default=False are not set at the db level, only at the Db-api level
+    is_restricted           = models.BooleanField(default=False)
     
 class AntibodyBatch(models.Model):
     antibody           = models.ForeignKey('Antibody')
@@ -616,7 +595,7 @@ class OtherReagent(models.Model):
     date_loaded             = models.DateField(null=True,blank=True)
     date_publicly_available = models.DateField(null=True,blank=True)
     date_updated            = models.DateField(null=True,blank=True)
-    is_restricted           = models.BooleanField(default=False) # Note: default=False are not set at the db level, only at the Db-api level
+    is_restricted           = models.BooleanField(default=False) 
 
 class OtherReagentBatch(models.Model):
     other_reagent           = models.ForeignKey('OtherReagent')
@@ -625,7 +604,6 @@ class OtherReagentBatch(models.Model):
     provider_catalog_id     = _CHAR(max_length=64, **_NULLOKSTR)
     
 class DataSet(models.Model):
-    #cells                   = models.ManyToManyField(Cell, verbose_name="Cells screened")
     facility_id             = _CHAR(max_length=_FACILITY_ID_LENGTH, unique=True, **_NOTNULLSTR)
     title                   = _TEXT(unique=True, **_NOTNULLSTR)
     lead_screener_firstname = _TEXT(**_NULLOKSTR)
@@ -691,8 +669,11 @@ CONCENTRATION_CHOICES = ((CONCENTRATION_NM,CONCENTRATION_NM),
                          (CONCENTRATION_UM,CONCENTRATION_UM),
                          (CONCENTRATION_MM,CONCENTRATION_MM))
 
-# LibraryMapping is equivalent to a "Well"; it details how the SmallMolecule is mapped in the Library
 class LibraryMapping(models.Model):
+    '''
+    LibraryMapping is equivalent to a "Well"; 
+    it details how the SmallMolecule is mapped in the Library.
+    '''
     library                 = models.ForeignKey('Library',null=True)
     smallmolecule_batch     = models.ForeignKey('SmallMoleculeBatch',null=True)
     is_control              = models.BooleanField()
@@ -710,8 +691,6 @@ class LibraryMapping(models.Model):
     
     def __unicode__(self):
         return unicode(str((self.library,self.smallmolecule_batch)))
-    #class Meta:
-    #    unique_together = ('library', 'smallmolecule_batch',)    
     
 class DataColumn(models.Model):
     dataset                 = models.ForeignKey('DataSet')
@@ -725,7 +704,8 @@ class DataColumn(models.Model):
     unit                    = _TEXT(**_NULLOKSTR)
     readout_type            = _TEXT(**_NULLOKSTR)
     comments                = _TEXT(**_NULLOKSTR)
-    display_order           = _INTEGER(null=True) # an example of why fieldinformation may need to be combined with datacolumn
+    # an example of why fieldinformation may need to be combined with datacolumn
+    display_order           = _INTEGER(null=True)
 
     #Note we also allow cells and proteins to be associated on a column granularity
     cell                    = models.ForeignKey('Cell', null=True)
@@ -741,28 +721,34 @@ class DataRecord(models.Model):
     sm_batch_id             = _CHAR(max_length=_BATCH_ID_LENGTH, **_NULLOKSTR) 
     cell_batch_id           = _CHAR(max_length=_BATCH_ID_LENGTH, **_NULLOKSTR) 
     
-    # NOTE: library_mapping: used in the case of control wells, if smallmolecule_batch is defined, then this must match the librarymapping to the smb
+    # NOTE: library_mapping: used in the case of control wells, 
+    # if smallmolecule_batch is defined, then this must match the librarymapping to the smb
     library_mapping         = models.ForeignKey('LibraryMapping',null=True)  
     cell                    = models.ForeignKey('Cell', null=True)
     protein                 = models.ForeignKey('Protein', null=True)
     antibody                = models.ForeignKey('Antibody', null=True)
     otherreagent            = models.ForeignKey('OtherReagent', null=True)
     plate                   = _INTEGER(null=True)
-    well                    = _CHAR(max_length=4, **_NULLOKSTR) # AA99
-    control_type            = _CHAR(max_length=35, **_NULLOKSTR) # TODO: controlled vocabulary
+    well                    = _CHAR(max_length=4, **_NULLOKSTR) 
+    control_type            = _CHAR(max_length=35, **_NULLOKSTR)
     def __unicode__(self):
-        return unicode(str((self.dataset,self.smallmolecule,self.cell,self.protein,self.plate,self.well)))
+        return unicode(str((self.dataset,self.smallmolecule,self.cell,
+            self.protein,self.plate,self.well)))
     
 class DataPoint(models.Model):
     datacolumn              = models.ForeignKey('DataColumn')
-    dataset                 = models.ForeignKey('DataSet') # TODO: are we using this? Note, Screen is being included here for convenience
+    # TODO: are we using this? Note, Screen is being included here for convenience
+    dataset                 = models.ForeignKey('DataSet') 
     datarecord              = models.ForeignKey('DataRecord') 
     int_value               = _INTEGER(null=True)
-    float_value             = models.FloatField(null=True) # Note: this results in a (postgres) double precision datatype - 8 bytes; approx 15 digits of decimal precision
+    # Note: this results in a (postgres) double precision datatype - 8 bytes; 
+    # approx 15 digits of decimal precision
+    float_value             = models.FloatField(null=True) 
     text_value              = _TEXT(**_NULLOKSTR)
     
     def __unicode__(self):
-        return unicode(str((self.datarecord,self.datacolumn,self.int_value,self.float_value,self.text_value)))
+        return unicode(str((self.datarecord,self.datacolumn,self.int_value,
+            self.float_value,self.text_value)))
     class Meta:
         unique_together = ('datacolumn', 'datarecord',)    
 
@@ -775,10 +761,11 @@ class AttachedFile(models.Model):
     batch_id_for            = _CHAR(max_length=_BATCH_ID_LENGTH, **_NULLOKSTR)
     file_type               = _TEXT(**_NULLOKSTR)
     file_date               = models.DateField(null=True,blank=True)
-    is_restricted           = models.BooleanField(default=False) # Note: default=False are not set at the db level, only at the Db-api level
+    is_restricted           = models.BooleanField(default=False) 
     
     def __unicode__(self):
-        return unicode(str((self.filename,self.relative_path,self.is_restricted, self.file_type,self.description,self.file_date)))
+        return unicode(str((self.filename,self.relative_path,self.is_restricted, 
+            self.file_type,self.description,self.file_date)))
     
     def _get_relative_path_to_file(self):
         "Returns the 'id string'"
@@ -788,6 +775,8 @@ class AttachedFile(models.Model):
      
 del _CHAR, _TEXT, _INTEGER
 del _NULLOKSTR, _NOTNULLSTR
+
+#### Utility functions ####
 
 def get_properties(obj):
     """
@@ -818,16 +807,16 @@ def get_properties(obj):
 
 def get_listing(model_object, search_tables):
     """
-    returns an ordered dict of field_name->{value:value,fieldinformation:}
-    to be used to display the item in the UI Listing views
+    @return ordered dict of field_name->{value:value,fieldinformation:}
+        to be used to display the item in the UI Listing views
     """
     return get_fielddata(model_object, search_tables, lambda x: x.show_in_list )
 
 def get_detail(model_object, search_tables, _filter=None, extra_properties=[],
                _override_filter=None ):
     """
-    returns an ordered dict of field_name->{value:value,fieldinformation:}
-    to be used to display the item in the UI Detail views
+    @return ordered dict of field_name->{value:value,fieldinformation:}
+        to be used to display the item in the UI Detail views
     """
     if _override_filter:
         field_information_filter = lambda x: _override_filter(x)
@@ -835,16 +824,19 @@ def get_detail(model_object, search_tables, _filter=None, extra_properties=[],
         field_information_filter = lambda x: x.show_in_detail and _filter(x)
     else:
         field_information_filter = lambda x: x.show_in_detail
-    return get_fielddata(model_object, search_tables, field_information_filter=field_information_filter, extra_properties=extra_properties )
+    return get_fielddata(
+        model_object, search_tables, 
+        field_information_filter=field_information_filter, 
+        extra_properties=extra_properties )
 
-def get_fielddata(model_object, search_tables, field_information_filter=None, extra_properties=[]):
+def get_fielddata(model_object, search_tables, field_information_filter=None, 
+        extra_properties=[]):
     """
-    returns an ordered dict of field_name->{value:value,fieldinformation:fi}
-    to be used to display the item in the UI Detail views
-    extra_properties are non-standard getters that wouldn't normally be returned (restricted fields)
+    @return: ordered dict of field_name->{value:value,fieldinformation:fi}
+        to be used to display the item in the UI Detail views
+    @param extra_properties non-standard getters that wouldn't normally be 
+        returned (restricted fields)
     """
-    #dump(self.dataset)
-    #data=model_to_dict(self.dataset)
     property_dict = get_properties(model_object)
     if len(extra_properties) > 0:
         for prop in extra_properties:
@@ -857,7 +849,8 @@ def get_fielddata(model_object, search_tables, field_information_filter=None, ex
         logger.debug(str(('get_field_info', field)))
         details = {}
         try:
-            fi = FieldInformation.manager.get_column_fieldinformation_by_priority(field,search_tables)
+            fi = FieldInformation.manager.\
+                get_column_fieldinformation_by_priority(field,search_tables)
             
             if fi and (field_information_filter and field_information_filter(fi)
                     or field_information_filter == None ): 
@@ -872,13 +865,13 @@ def get_fielddata(model_object, search_tables, field_information_filter=None, ex
     ui_dict = OrderedDict(sorted(ui_dict.items(), key=lambda x: x[1]['fieldinformation'].order))
     if(logger.isEnabledFor(logging.DEBUG)): logger.debug(str(('ui_dict',ui_dict)))
     return ui_dict
-    #return self.DatasetForm(data)
  
 
 def get_detail_bundle(obj,tables_to_search, _filter=None, _override_filter=None):
     """
-    returns a bundle (dict of {verbose_name->value}) for the object, using fieldinformation to 
-    determine fields to show, and to find the verbose names
+    @return a bundle (dict of {verbose_name->value}) for the object, 
+        using fieldinformation to determine fields to show, and to find the 
+        verbose names
     """
     detail = get_detail(obj, tables_to_search, _filter, _override_filter=_override_filter)
     data = {}
@@ -888,7 +881,8 @@ def get_detail_bundle(obj,tables_to_search, _filter=None, _override_filter=None)
 
 def get_schema_fieldinformation(field, search_tables):
     """
-    generate a dict of the fieldinformation that should be shown as a part of a listing of the information for a field
+    Generate a dict of the fieldinformation that should be shown as a part of a
+    listing of the information for a field
     """
     #TODO: research proper way to make a lazy instantiation
     _meta_field_info = get_listing(FieldInformation(),['fieldinformation'])
@@ -905,14 +899,16 @@ def get_schema_fieldinformation(field, search_tables):
 
 def get_fieldinformation(field, search_tables=[]):
     """
-    convenience wrapper around FieldInformation.manager.get_column_fieldinformation_by_priority(field,search_tables)
+    Convenience wrapper around 
+    FieldInformation.manager.get_column_fieldinformation_by_priority(field,search_tables)
     """
     return FieldInformation.manager.get_column_fieldinformation_by_priority(field,search_tables)
 
 def get_detail_schema(obj,tables_to_search, field_information_filter=None):
     """
-    returns a schema (a dictionary: {fieldinformation.camel_case_dwg_name -> {field information for each field in the model obj}) 
-    for the api
+    @return a schema (a dictionary: 
+        { fieldinformation.camel_case_dwg_name: {field information for each field in the model obj}) 
+        for the api
     """
 #    meta_field_info = get_fielddata(FieldInformation(),['fieldinformation'])
     #TODO: research proper way to make a lazy instantiation
@@ -935,25 +931,3 @@ def get_detail_schema(obj,tables_to_search, field_information_filter=None):
         fields[fi.get_camel_case_dwg_name()]= field_schema_info
     return fields
 
-#from django.core.cache import cache
-#def find_miami_lincs_mapping(sm_id):
-#    miami_lincs_id_map = cache.get('miami_lincs_id_map')
-#    if not miami_lincs_id_map:
-#        filesystemfinder = FileSystemFinder()
-#        matches = filesystemfinder.find("miami_lincs_mapping.csv")
-#        logger.info(str(('read in file', matches)))
-#        if matches:
-#            if not isinstance(matches, basestring): matches = matches[0]
-#            with open(matches) as _file:
-#                reader = csv.reader(_file,delimiter=',')
-#                miami_lincs_id_map = {}
-#                for line in reader:
-#                    miami_lincs_id_map[line[0]]=line[1]
-#            cache.set('miami_lincs_id_map', miami_lincs_id_map)
-#        else:
-#            logger.error(str(('filesystem finder cannot locate the miami_incs_mapping.csv')))
-#    if sm_id in miami_lincs_id_map:
-#        return miami_lincs_id_map[sm_id]
-#    else:
-#        logger.warn(str(('miami_lincs_mapping.csv does not contain sm id', sm_id)))
-    
