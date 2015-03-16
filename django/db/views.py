@@ -2481,6 +2481,12 @@ class ProteinTable(PagedTable):
                         
 class AntibodyTable(PagedTable):
     facility_id = tables.LinkColumn("antibody_detail", args=[A('facility_id')])
+    
+    alternative_names = DivWrappedColumn(classname='fixed_width_column', visible=False)
+    target_protein_name = DivWrappedColumn(classname='fixed_width_column', visible=False)
+    immunogen = DivWrappedColumn(classname='fixed_width_column', visible=False)
+    production_information = DivWrappedColumn(classname='fixed_width_column', visible=False) 
+    
     rank = tables.Column()
     snippet = DivWrappedColumn(verbose_name='matched text', classname='snippet')
     snippet_def = (" || ' ' || ".join(
