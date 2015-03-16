@@ -550,27 +550,27 @@ class Protein(models.Model):
         return unicode(self.lincs_id)
 
 class Antibody(models.Model):
-    facility_id             = _CHAR(max_length=_FACILITY_ID_LENGTH, **_NOTNULLSTR)
-    lincs_id                = _CHAR(max_length=15, **_NULLOKSTR)
-    name                    = _TEXT(**_NOTNULLSTR)
-    alternative_names       = _TEXT(**_NULLOKSTR) 
-    target_protein_name     = _TEXT(**_NULLOKSTR) 
+    facility_id             = models.CharField(max_length=_FACILITY_ID_LENGTH, **_NOTNULLSTR)
+    name                    = models.TextField(**_NOTNULLSTR)
+    alternative_names       = models.TextField(**_NULLOKSTR) 
+    monoclonal_clone_id     = models.TextField(max_length=15, **_NULLOKSTR)
+    antibody_registry_id    = models.TextField(**_NULLOKSTR)
+    antibody_registry_url   = models.TextField(**_NULLOKSTR)
+    lincs_id                = models.CharField(max_length=15, **_NULLOKSTR)
+    target_protein_name     = models.TextField(**_NULLOKSTR) 
     # Note: UNIPROT ID's are 6 chars long, but we have a record with two in it, see issue #74
-    target_protein_uniprot_id       = _CHAR(max_length=13, **_NULLOKSTR) 
-    target_gene_name      = _CHAR(max_length=35, **_NULLOKSTR)
-    target_gene_id          = _CHAR(max_length=35, **_NULLOKSTR)
-    target_organism         = _CHAR(max_length=35, **_NULLOKSTR)
-    immunogen               = _TEXT(**_NULLOKSTR) 
-    immunogen_sequence      = _TEXT(**_NULLOKSTR) 
-    antibody_clonality      = _TEXT(**_NULLOKSTR) 
-    source_organism         = _CHAR(max_length=35, **_NULLOKSTR)
-    antibody_isotype        = _CHAR(max_length=35, **_NULLOKSTR)
-    engineering             = _TEXT(**_NULLOKSTR) 
-    antibody_purity         = _TEXT(**_NULLOKSTR) 
-    antibody_labeling       = _TEXT(**_NULLOKSTR) 
-    recommended_experiment_type     = _TEXT(**_NULLOKSTR) 
-    relevant_reference      = _TEXT(**_NULLOKSTR) 
-    specificity             = _TEXT(**_NULLOKSTR) 
+    target_protein_uniprot_id = models.CharField(max_length=16, **_NULLOKSTR) 
+    non_protein_target_name = models.TextField(**_NULLOKSTR)
+    protein_target_organism = models.TextField(**_NULLOKSTR)
+    immunogen               = models.TextField(**_NULLOKSTR)
+    immunogen_sequence      = models.TextField(**_NULLOKSTR)
+    source_organism         = models.TextField(**_NULLOKSTR)
+    clonality               = models.TextField(**_NULLOKSTR)
+    isotype                 = models.TextField(**_NULLOKSTR) 
+    production_information  = models.TextField(**_NULLOKSTR)
+    antibody_labeling_conjugation = models.TextField(**_NULLOKSTR)
+    relevant_references     = models.TextField(**_NULLOKSTR)
+    life_compound_information = models.TextField(**_NULLOKSTR)
     date_data_received      = models.DateField(null=True,blank=True)
     date_loaded             = models.DateField(null=True,blank=True)
     date_publicly_available = models.DateField(null=True,blank=True)
@@ -578,10 +578,21 @@ class Antibody(models.Model):
     is_restricted           = models.BooleanField(default=False)
     
 class AntibodyBatch(models.Model):
-    antibody           = models.ForeignKey('Antibody')
-    facility_batch_id       = _CHAR(max_length=_BATCH_ID_LENGTH, **_NOTNULLSTR)
-    provider                = _TEXT(**_NULLOKSTR)
-    provider_catalog_id     = _CHAR(max_length=64, **_NULLOKSTR)
+    antibody                = models.ForeignKey('Antibody')
+    batch_id                = models.CharField(max_length=_BATCH_ID_LENGTH, **_NOTNULLSTR)
+    provider_name           = models.TextField(blank=True)
+    provider_catalog_id     = models.CharField(max_length=64, **_NULLOKSTR)
+    antibody_purity         = models.TextField(blank=True)
+
+    date_data_received = models.DateField(null=True,blank=True)
+    date_loaded = models.DateField(null=True,blank=True)
+    date_publicly_available = models.DateField(null=True,blank=True)
+    date_updated = models.DateField(null=True,blank=True)
+
+    def __unicode__(self):
+        return unicode(str((self.antibody,self.batch_id)))
+    class Meta:
+        unique_together = ('antibody', 'batch_id',)    
     
 class OtherReagent(models.Model):
     facility_id             = _CHAR(max_length=_FACILITY_ID_LENGTH, **_NOTNULLSTR)
@@ -720,6 +731,7 @@ class DataRecord(models.Model):
     
     sm_batch_id             = _CHAR(max_length=_BATCH_ID_LENGTH, **_NULLOKSTR) 
     cell_batch_id           = _CHAR(max_length=_BATCH_ID_LENGTH, **_NULLOKSTR) 
+    antibody_batch_id       = _CHAR(max_length=_BATCH_ID_LENGTH, **_NULLOKSTR) 
     
     # NOTE: library_mapping: used in the case of control wells, 
     # if smallmolecule_batch is defined, then this must match the librarymapping to the smb

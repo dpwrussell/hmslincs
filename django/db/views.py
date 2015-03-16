@@ -42,7 +42,7 @@ from PagedRawQuerySet import PagedRawQuerySet
 from db.models import PubchemRequest, SmallMolecule, SmallMoleculeBatch, Cell, \
     Protein, DataSet, Library, FieldInformation, AttachedFile, DataRecord, \
     DataColumn, get_detail, Antibody, OtherReagent, CellBatch, QCEvent,\
-    QCAttachedFile
+    QCAttachedFile, AntibodyBatch
 
 
 logger = logging.getLogger(__name__)
@@ -352,12 +352,35 @@ def antibodyIndex(request):
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
     return render_list_index(request, table,search,'Antibody','Antibodies')
     
-def antibodyDetail(request, facility_id):
+def antibodyDetail(request, facility_id, batch_id=None):
     try:
         antibody = Antibody.objects.get(facility_id=facility_id) # todo: cell here
         if(antibody.is_restricted and not request.user.is_authenticated()):
             return HttpResponse('Log in required.', status=401)
         details = {'object': get_detail(antibody, ['antibody',''])}
+        
+        logger.info(str(('batch_id', batch_id)))
+        antibody_batch = None
+        if(batch_id):
+            antibody_batch = AntibodyBatch.objects.get(
+                antibody=antibody,batch_id=batch_id) 
+        # batch table
+        if(antibody_batch == None):
+            batches = AntibodyBatch.objects.filter(antibody=antibody)
+            logger.info(str(('batches', len(batches))))
+            
+            if len(batches)>1:
+                logger.info(str(('batches', batches)))
+                details['batchTable']=AntibodyBatchTable(batches)
+            elif len(batches)==1:
+                antibody_batch = batches[0]
+        if antibody_batch:
+            details['antibody_batch']= get_detail(
+                antibody_batch,['antibodybatch',''])
+            attachedFiles = get_attached_files(
+                antibody.facility_id,batch_id=antibody_batch.batch_id)
+            if(len(attachedFiles)>0):
+                details['attached_files_batch'] = AttachedFileTable(attachedFiles)        
         
         # datasets table
         dataset_ids = find_datasets_for_antibody(antibody.id)
@@ -1331,6 +1354,7 @@ class TypeColumn(tables.Column):
         elif value == "sm_detail": return "Small Molecule"
         elif value == "dataset_detail": return "Dataset"
         elif value == "protein_detail": return "Protein"
+        elif value == "antibody_detail": return "Antibody"
         else: raise Exception("Unknown type: "+value)
 
 class DivWrappedColumn(tables.Column):
@@ -2264,6 +2288,19 @@ class CellBatchTable(PagedTable):
         set_table_column_info(
             self, ['cell','cellbatch',''],sequence_override)  
 
+class AntibodyBatchTable(PagedTable):
+    batch_id = tables.LinkColumn("antibody_detail2", args=[A('antibody.facility_id'),A('batch_id')])
+    
+    class Meta:
+        model = AntibodyBatch
+        orderable = True
+        attrs = {'class': 'paleblue'}
+
+    def __init__(self, table, *args, **kwargs):
+        super(AntibodyBatchTable, self).__init__(table, *args, **kwargs)
+        sequence_override = ['batch_id']
+        set_table_column_info(
+            self, ['antibody','antibodybatch',''],sequence_override)  
 
 class SaltTable(PagedTable):
     
@@ -2541,7 +2578,7 @@ class LibraryForm(ModelForm):
             
 class SiteSearchManager(models.Manager):
 
-    tags = [ 'datasets:', 'cells:', 'proteins:', 'small molecules:' ];
+    tags = [ 'datasets:', 'cells:', 'proteins:', 'small molecules:','antibodies:' ];
     tags2 = [ 'KINOMEscan', 'KiNativ', 'MGH/CMT Growth Inhibition',
                 'Microfluidics" (Yale)', 'Microscopy/Imaging', 'ELISA',
                 'Analysis', 'Nominal Targets','Other' ];
@@ -2570,6 +2607,18 @@ class SiteSearchManager(models.Manager):
                 
                 return data;
             elif match1 == 'cells':
+                queryset = Cell.objects.filter(
+                    datacolumn_set__dataset__dataset_type=match2)
+                for x in queryset:
+                    data.append({ 
+                        'id': x.id, 
+                        'facility_id': str(x.facility_id), 
+                        'snippet': x.title, 
+                        'rank': 1, 
+                        'type': 'dataset_detail' })
+                
+                return data;
+            elif match1 == 'antibodies':
                 queryset = Cell.objects.filter(
                     datacolumn_set__dataset__dataset_type=match2)
                 for x in queryset:

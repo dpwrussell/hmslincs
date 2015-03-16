@@ -167,6 +167,10 @@ then
   python src/import_antibody.py -f sampledata/HMS-LINCS_antibodies.xls
   check_errs $? 'import antibodies fails'
 
+  echo 'import antibody batch tables...'
+  python src/import_antibody_batch.py -f sampledata/antibody_batch.xlsx
+  check_errs $? 'import antibody batch fails
+
   echo 'import other reagent tables...'
   python src/import_other_reagent.py -f sampledata/HMS-LINCS_other_reagents.xls
   check_errs $? 'import other reagents fails'
