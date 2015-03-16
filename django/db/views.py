@@ -2484,8 +2484,11 @@ class AntibodyTable(PagedTable):
     
     alternative_names = DivWrappedColumn(classname='fixed_width_column', visible=False)
     target_protein_name = DivWrappedColumn(classname='fixed_width_column', visible=False)
+    non_protein_target_name = DivWrappedColumn(classname='fixed_width_column', visible=False)
     immunogen = DivWrappedColumn(classname='fixed_width_column', visible=False)
     production_information = DivWrappedColumn(classname='fixed_width_column', visible=False) 
+    antibody_labeling_conjugation = DivWrappedColumn(classname='fixed_width_column', visible=False)
+    relevant_references = DivWrappedColumn(classname='fixed_width_column', visible=False)
     
     rank = tables.Column()
     snippet = DivWrappedColumn(verbose_name='matched text', classname='snippet')
