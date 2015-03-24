@@ -73,7 +73,7 @@ def convertdata(value, t=None):
         elif t is date:
             return dateutil.parser.parse(value)
         elif t is bool:
-            if(value.lower() == 'true' or value.lower() == 't'): return True
+            if(value.lower() == 'true' or value.lower() == 't' or value.lower() == 'yes'): return True
             return False
         else:
             return t(value)
