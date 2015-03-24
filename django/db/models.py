@@ -114,7 +114,7 @@ class FieldsManager(models.Manager):
             self.fieldinformation_map[table_or_queryset] = table_hash
         
         if not field_or_alias in table_hash or not table_hash[field_or_alias]:
-            logger.info(str(('finding', table_or_queryset,  field_or_alias)))
+            logger.debug(str(('finding', table_or_queryset,  field_or_alias)))
             val = self.get_column_fieldinformation_uncached(
                 field_or_alias, table_or_queryset)
             table_hash[field_or_alias] = val
@@ -169,6 +169,9 @@ class FieldsManager(models.Manager):
                 return self.get_query_set().get(
                     table=table_or_queryset, alias=field_or_alias)
             except (ObjectDoesNotExist,MultipleObjectsReturned) as e:
+                logger.warn(str((
+                    'No field information found for table/alias, field/alias: ',
+                    table_or_queryset,field_or_alias, e)))
                 return None
         
     #TODO: link this in to the reindex process!
@@ -554,21 +557,26 @@ class Antibody(models.Model):
     name                    = models.TextField(**_NOTNULLSTR)
     alternative_names       = models.TextField(**_NULLOKSTR) 
     monoclonal_clone_id     = models.TextField(max_length=15, **_NULLOKSTR)
-    antibody_registry_id    = models.TextField(**_NULLOKSTR)
-    antibody_registry_url   = models.TextField(**_NULLOKSTR)
+    antibody_registry_ids    = models.TextField(**_NULLOKSTR)
     lincs_id                = models.CharField(max_length=15, **_NULLOKSTR)
+    target_protein          = models.ForeignKey('Protein', null=True)
     target_protein_name     = models.TextField(**_NULLOKSTR) 
     # Note: UNIPROT ID's are 6 chars long, but we have a record with two in it, see issue #74
     target_protein_uniprot_id = models.CharField(max_length=16, **_NULLOKSTR) 
     non_protein_target_name = models.TextField(**_NULLOKSTR)
-    protein_target_organism = models.TextField(**_NULLOKSTR)
+    target_organism         = models.TextField(**_NULLOKSTR)
     immunogen               = models.TextField(**_NULLOKSTR)
     immunogen_sequence      = models.TextField(**_NULLOKSTR)
     source_organism         = models.TextField(**_NULLOKSTR)
     clonality               = models.TextField(**_NULLOKSTR)
     isotype                 = models.TextField(**_NULLOKSTR) 
+    
+    is_antibody_engineered  = models.NullBooleanField()
     production_information  = models.TextField(**_NULLOKSTR)
-    antibody_labeling_conjugation = models.TextField(**_NULLOKSTR)
+    
+    is_antibody_labeled_conjugated = models.NullBooleanField()
+    labeling_conjugation_details = models.TextField(**_NULLOKSTR)
+    
     relevant_references     = models.TextField(**_NULLOKSTR)
     life_compound_information = models.TextField(**_NULLOKSTR)
     date_data_received      = models.DateField(null=True,blank=True)
@@ -582,6 +590,7 @@ class AntibodyBatch(models.Model):
     batch_id                = models.CharField(max_length=_BATCH_ID_LENGTH, **_NOTNULLSTR)
     provider_name           = models.TextField(blank=True)
     provider_catalog_id     = models.CharField(max_length=64, **_NULLOKSTR)
+    provider_batch_id       = models.CharField(max_length=64, **_NULLOKSTR)
     antibody_purity         = models.TextField(blank=True)
 
     date_data_received = models.DateField(null=True,blank=True)

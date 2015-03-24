@@ -16,6 +16,10 @@
 				<a target="_blank" href="http://www.uniprot.org/uniprot/{{ info.value }}">{{ info.value }}</a>
       {% elif info.value and info.fieldinformation.field == 'salt_id' %}
         <a target="_blank" href="/db/sm/salt/{{ info.value }}">{{ info.value }}</a>
+      {% elif info.value and info.fieldinformation.field == 'target_protein' %}
+        <a target="_self" href="/db/proteins/{{ info.value }}">HMSL{{ info.value }}</a>
+      {% elif info.value and info.fieldinformation.field == 'antibody_registry_ids' %}
+        {% for id in info.value %}{%if forloop.counter0 > 0 %}, {% endif %}<a target="_blank" href="http://antibodyregistry.org/search.php?q={{ id }}">{{ id }}</a>{% endfor %}
 		  {% else %}
 	    	{% firstof info.value "" %}
 	    {% endif %}

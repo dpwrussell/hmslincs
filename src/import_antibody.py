@@ -7,7 +7,7 @@ import logging
 
 import init_utils as iu
 import import_utils as util
-from db.models import Antibody
+from db.models import Antibody, Protein
 from django.db import transaction
 
 __version__ = "$Revision: 24d02504e664 $"
@@ -41,20 +41,22 @@ def main(path):
               'name': ('name',True),
               'alternative_names': 'alternative_names',
               'monoclonal_clone_id': 'monoclonal_clone_id',
-              'antibody_registry_id': 'antibody_registry_id',
-              'antibody_registry_url': 'antibody_registry_url',
+              'antibody_registry_ids': 'antibody_registry_ids',
               'lincs_id': 'lincs_id',
+              'target_protein_hms_lincs_id':'target_protein',
               'target_protein_name': 'target_protein_name',
               'target_protein_uniprot_id': 'target_protein_uniprot_id',
               'non_protein_target_name': 'non_protein_target_name',
-              'protein_target_organism': 'protein_target_organism',
+              'target_organism': 'target_organism',
               'immunogen': 'immunogen',
               'immunogen_sequence': 'immunogen_sequence',
               'source_organism': 'source_organism',
               'clonality': 'clonality',
               'isotype': 'isotype',
+              'is_antibody_engineered':('is_antibody_engineered',False,None,util.bool_converter),
               'production_information': 'production_information',
-              'antibody_labeling_conjugation': 'antibody_labeling_conjugation',
+              'is_antibody_labeled_conjugated':('is_antibody_labeled_conjugated',False,None,util.bool_converter),
+              'labeling_conjugation_details': 'labeling_conjugation_details',
               'relevant_references': 'relevant_references',
               'life_compound_information': 'life_compound_information',
               'Date Data Received':('date_data_received',False,None,util.date_converter),
@@ -94,9 +96,22 @@ def main(path):
                 if( default != None ):
                     value = default
             if(value == None and  required == True):
-                raise Exception('Field is required: %s, record: %d' % (properties['column_label'],rows))
+                raise Exception(
+                    'Field is required: %s, record: %d' % (properties['column_label'],rows))
             logger.debug(str(('model_field: ' , model_field, ', value: ', value)))
             initializer[model_field] = value
+            
+        try:
+            logger.debug(str(('initializer: ', initializer)))
+            if initializer['target_protein']:
+                initializer['target_protein'] = \
+                    Protein.objects.get(lincs_id=initializer['target_protein'])
+        except Exception, e:
+            logger.error(str(( 
+                "Protein table entry for Target protein HMS LINCS ID not found: ", 
+                initializer['target_protein'], initializer)))
+            raise
+            
         try:
             logger.debug(str(('initializer: ', initializer)))
             antibody = Antibody(**initializer)

@@ -357,7 +357,13 @@ def antibodyDetail(request, facility_id, batch_id=None):
         antibody = Antibody.objects.get(facility_id=facility_id) # todo: cell here
         if(antibody.is_restricted and not request.user.is_authenticated()):
             return HttpResponse('Log in required.', status=401)
-        details = {'object': get_detail(antibody, ['antibody',''])}
+        
+        _dict = get_detail(antibody, ['antibody',''])
+        if _dict['antibody_registry_ids'].get('value', None):
+            _dict['antibody_registry_ids']['value'] = \
+                [x.strip() for x in _dict['antibody_registry_ids']['value'].split(',')]
+        details = {'object': _dict }        
+
         
         logger.info(str(('batch_id', batch_id)))
         antibody_batch = None
