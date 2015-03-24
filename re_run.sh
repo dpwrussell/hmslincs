@@ -210,7 +210,7 @@ then
   check_errs $? 'import protein fails'
     
   echo 'import antibody tables...'
-  python src/import_antibody.py -f sampledata/sample_antibodies.xls
+  python src/import_antibody.py -f sampledata/sample_antibodies.xlsx
   check_errs $? 'import antibodies fails'
     
   echo 'import antibody batch tables...'
