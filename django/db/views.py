@@ -229,7 +229,7 @@ def cellDetail(request, facility_batch, batch_id=None):
 
         
         return render(request, 'db/cellDetail.html', details)
-    except Cell.DoesNotExist:
+    except ObjectDoesNotExist:
         raise Http404
 
  
@@ -327,7 +327,7 @@ def proteinDetail(request, lincs_id):
                 
         return render(request, 'db/proteinDetail.html', details)
  
-    except Protein.DoesNotExist:
+    except ObjectDoesNotExist:
         raise Http404
  
 def antibodyIndex(request):
@@ -409,7 +409,7 @@ def antibodyDetail(request, facility_id, batch_id=None):
                 
         return render(request, 'db/antibodyDetail.html', details)
  
-    except Antibody.DoesNotExist:
+    except ObjectDoesNotExist:
         raise Http404
  
 def otherReagentIndex(request):
@@ -455,7 +455,7 @@ def otherReagentDetail(request, facility_id):
 
         return render(request, 'db/otherReagentDetail.html', details)
  
-    except OtherReagent.DoesNotExist:
+    except ObjectDoesNotExist:
         raise Http404
 
 def saltIndex(request):
@@ -590,7 +590,7 @@ def smallMoleculeMolfile(request, facility_salt_id):
         response.write(sm.molfile)
         return response
         
-    except SmallMolecule.DoesNotExist:
+    except ObjectDoesNotExist:
         raise Http404
  
 def saltDetail(request, salt_id):
@@ -695,7 +695,7 @@ def smallMoleculeDetail(request, facility_salt_id):
                 column_exclusion_overrides=['facility_salt_batch','col0','col2'])
             logger.debug(str(('otable',ntable.data, len(otable.data))))
             if(len(otable.data)>0): details['other_targets_table']=otable
-        except DataSet.DoesNotExist:
+        except ObjectDoesNotExist:
             logger.warn('Nominal Targets dataset does not exist')
         
         image_location = ( COMPOUND_IMAGE_LOCATION + '/HMSL%s-%s.png' 
@@ -718,8 +718,7 @@ def smallMoleculeDetail(request, facility_salt_id):
         details['extralink'] = extralink
         
         return render(request,'db/smallMoleculeDetail.html', details)
-
-    except SmallMolecule.DoesNotExist:
+    except ObjectDoesNotExist:
         raise Http404
 
 def libraryIndex(request):
@@ -755,7 +754,7 @@ def libraryDetail(request, short_name):
                     table, queryset, 'library' )
         
         return render(request,'db/libraryDetail.html', response_dict)
-    except Library.DoesNotExist:
+    except ObjectDoesNotExist:
         raise Http404
 
 def datasetIndex(request): #, type='screen'):
@@ -867,7 +866,7 @@ def datasetDetailCells(request, facility_id):
             return send_to_file(
                 outputType, 'cells_for_'+ str(facility_id), 
                 CellTable(manager.cell_queryset), manager.cell_queryset, 'cell' )
-        except DataSet.DoesNotExist:
+        except ObjectDoesNotExist:
             raise Http404
     try:
         details = datasetDetail(request,facility_id, 'cells')
@@ -888,7 +887,7 @@ def datasetDetailProteins(request, facility_id):
                 outputType, 'proteins_for_'+ str(facility_id), 
                 ProteinTable(manager.protein_queryset), 
                 manager.protein_queryset, 'protein' )
-        except DataSet.DoesNotExist:
+        except ObjectDoesNotExist:
             raise Http404
     try:
         details = datasetDetail(request,facility_id,'proteins')
@@ -909,7 +908,7 @@ def datasetDetailAntibodies(request, facility_id):
                 outputType, 'antibodies_for_'+ str(facility_id), 
                 AntibodyTable(manager.antibody_queryset), 
                 manager.antibody_queryset, 'antibody' )
-        except DataSet.DoesNotExist:
+        except ObjectDoesNotExist:
             raise Http404
     try:
         details = datasetDetail(request,facility_id,'antibodies')
@@ -930,7 +929,7 @@ def datasetDetailOtherReagents(request, facility_id):
                 outputType, 'other_reagents_for_'+ str(facility_id), 
                 OtherReagentTable(manager.otherreagent_queryset), 
                 manager.otherreagent_queryset, 'otherreagent' )
-        except DataSet.DoesNotExist:
+        except ObjectDoesNotExist:
             raise Http404
     try:
         details = datasetDetail(request,facility_id,'otherreagents')
@@ -958,7 +957,7 @@ def datasetDetailSmallMolecules(request, facility_id):
                     outputType, 'small_molecules_for_'+ str(facility_id), 
                     SmallMoleculeTable(manager.small_molecule_queryset), 
                     manager.small_molecule_queryset, 'smallmolecule' )
-        except DataSet.DoesNotExist:
+        except ObjectDoesNotExist:
             raise Http404
     try:
         details = datasetDetail(request,facility_id,'small_molecules')
@@ -1015,7 +1014,7 @@ def datasetDetailDataColumns(request, facility_id):
                 outputType, 'datacolumns_for_'+ str(facility_id),
                 DataColumnTable(queryset), array_of_dicts, 'dataset', 
                 extra_columns=extra_columns )
-        except DataSet.DoesNotExist:
+        except ObjectDoesNotExist:
             raise Http404
     try:
         details = datasetDetail(request,facility_id,'datacolumns')
@@ -1033,7 +1032,10 @@ def datasetDetailResults(request, facility_id, template='db/datasetDetailResults
 
         outputType = request.GET.get('output_type','')
         if(outputType != ''):
-            dataset = DataSet.objects.get(facility_id=facility_id)
+            try:
+                dataset = DataSet.objects.get(facility_id=facility_id)
+            except ObjectDoesNotExist:
+                raise Http404
             if(dataset.is_restricted and not request.user.is_authenticated()):
                 raise Http401
             manager = DataSetManager(dataset)
@@ -1058,7 +1060,7 @@ def datasetDetail(request, facility_id, sub_page):
         dataset = DataSet.objects.get(facility_id=facility_id)
         if(dataset.is_restricted and not request.user.is_authenticated()):
             raise Http401
-    except DataSet.DoesNotExist:
+    except ObjectDoesNotExist:
         raise Http404
 
     manager = DataSetManager(dataset)
