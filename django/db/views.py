@@ -3412,8 +3412,10 @@ def export_as_csv(name,col_key_name_map, cursor=None, queryset=None,
 
     debug_interval=1000
     row = 0
-    assert (cursor or queryset) \
-        and not (cursor and queryset), 'must define either cursor or queryset'
+    if not cursor and not queryset or (cursor and queryset):
+        raise Http404('must define either cursor or queryset')
+    #     assert (cursor or queryset) \
+    #         and not (cursor and queryset), 'must define either cursor or queryset'
     if cursor:
         obj=cursor.fetchone()
         keys = col_key_name_map.keys()
@@ -3465,8 +3467,10 @@ def export_as_xls(name,col_key_name_map, cursor=None, queryset=None,
             
     debug_interval=1000
     row = 0
-    assert (cursor or queryset) \
-        and not (cursor and queryset), 'must define either cursor or queryset'
+    if not cursor and not queryset or (cursor and queryset):
+        raise Http404('must define either cursor or queryset')
+    #     assert (cursor or queryset) \
+    #         and not (cursor and queryset), 'must define either cursor or queryset'
     if cursor:
         obj=cursor.fetchone()
         keys = col_key_name_map.keys()
