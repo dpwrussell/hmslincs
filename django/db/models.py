@@ -553,45 +553,44 @@ class Protein(models.Model):
         return unicode(self.lincs_id)
 
 class Antibody(models.Model):
-    facility_id             = models.CharField(max_length=_FACILITY_ID_LENGTH, **_NOTNULLSTR)
-    name                    = models.TextField(**_NOTNULLSTR)
-    alternative_names       = models.TextField(**_NULLOKSTR) 
-    monoclonal_clone_id     = models.TextField(max_length=15, **_NULLOKSTR)
-    antibody_registry_ids    = models.TextField(**_NULLOKSTR)
-    lincs_id                = models.CharField(max_length=15, **_NULLOKSTR)
-    target_protein          = models.ForeignKey('Protein', null=True)
-    target_protein_name     = models.TextField(**_NULLOKSTR) 
-    # Note: UNIPROT ID's are 6 chars long, but we have a record with two in it, see issue #74
-    target_protein_uniprot_id = models.CharField(max_length=16, **_NULLOKSTR) 
-    non_protein_target_name = models.TextField(**_NULLOKSTR)
-    target_organism         = models.TextField(**_NULLOKSTR)
-    immunogen               = models.TextField(**_NULLOKSTR)
-    immunogen_sequence      = models.TextField(**_NULLOKSTR)
-    source_organism         = models.TextField(**_NULLOKSTR)
-    clonality               = models.TextField(**_NULLOKSTR)
-    isotype                 = models.TextField(**_NULLOKSTR) 
     
-    is_antibody_engineered  = models.NullBooleanField()
-    production_information  = models.TextField(**_NULLOKSTR)
-    
-    is_antibody_labeled_conjugated = models.NullBooleanField()
-    labeling_conjugation_details = models.TextField(**_NULLOKSTR)
-    
-    relevant_references     = models.TextField(**_NULLOKSTR)
-    life_compound_information = models.TextField(**_NULLOKSTR)
-    date_data_received      = models.DateField(null=True,blank=True)
-    date_loaded             = models.DateField(null=True,blank=True)
+    facility_id = models.CharField(max_length=_FACILITY_ID_LENGTH, null=False)
+    name = models.TextField(null=False)
+    alternative_names = models.TextField(null=True) 
+    clone_name = models.TextField(null=False)
+    antibody_registry_id = models.TextField(null=True)
+    lincs_id = models.CharField(max_length=64, null=True)
+    target_protein = models.ForeignKey('Protein', null=True)
+    non_protein_target_name = models.TextField(null=True)
+    target_organism = models.TextField(null=True)
+    antibody_type = models.TextField(null=True)
+    immunogen = models.TextField(null=True)
+    immunogen_sequence = models.TextField(null=True)
+    source_organism = models.TextField(null=True)
+    species = models.TextField(null=True)
+    clonality = models.TextField(null=True)
+    isotype = models.TextField(null=True)
+    production_details = models.TextField(null=True)
+    labeling = models.TextField(null=True)
+    labeling_details = models.TextField(null=True)
+    relevant_references = models.TextField(null=True)
+
+    date_data_received = models.DateField(null=True,blank=True)
+    date_loaded = models.DateField(null=True,blank=True)
     date_publicly_available = models.DateField(null=True,blank=True)
-    date_updated            = models.DateField(null=True,blank=True)
-    is_restricted           = models.BooleanField(default=False)
+    date_updated = models.DateField(null=True,blank=True)
+    is_restricted = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return unicode(str((self.facility_id,self.name)))
     
 class AntibodyBatch(models.Model):
-    antibody                = models.ForeignKey('Antibody')
-    batch_id                = models.CharField(max_length=_BATCH_ID_LENGTH, **_NOTNULLSTR)
-    provider_name           = models.TextField(blank=True)
-    provider_catalog_id     = models.CharField(max_length=64, **_NULLOKSTR)
-    provider_batch_id       = models.CharField(max_length=64, **_NULLOKSTR)
-    antibody_purity         = models.TextField(blank=True)
+    antibody = models.ForeignKey('Antibody')
+    facility_batch_id = models.CharField(max_length=_BATCH_ID_LENGTH, null=False)
+    provider = models.TextField(null=True)
+    provider_catalog_id = models.CharField(max_length=128, null=True)
+    provider_batch_id = models.CharField(max_length=32, null=True)
+    purity = models.TextField(null=True)
 
     date_data_received = models.DateField(null=True,blank=True)
     date_loaded = models.DateField(null=True,blank=True)
@@ -599,9 +598,9 @@ class AntibodyBatch(models.Model):
     date_updated = models.DateField(null=True,blank=True)
 
     def __unicode__(self):
-        return unicode(str((self.antibody,self.batch_id)))
+        return unicode(str((self.antibody,self.facility_batch_id)))
     class Meta:
-        unique_together = ('antibody', 'batch_id',)    
+        unique_together = ('antibody', 'facility_batch_id',)    
     
 class OtherReagent(models.Model):
     facility_id             = _CHAR(max_length=_FACILITY_ID_LENGTH, **_NOTNULLSTR)

@@ -40,11 +40,11 @@ def main(path):
     properties = ('model_field','required','default','converter')
     column_definitions = { 
               'Facility ID':('facility_id',True),
-              'AR_Batch_ID':('batch_id',True,None,lambda x:util.convertdata(x,int)),
-              'AR_Provider_Name':'provider_name',
+              'AR_Batch_ID':('facility_batch_id',True,None,lambda x:util.convertdata(x,int)),
+              'AR_Provider_Name':'provider',
               'AR_Provider_Catalog_ID':'provider_catalog_id',
               'AR_Provider_Batch_ID':'provider_batch_id',
-              'AR_Antibody_Purity':'antibody_purity',
+              'AR_Antibody_Purity':'purity',
               'Date Data Received':('date_data_received',False,None,util.date_converter),
               'Date Loaded': ('date_loaded',False,None,util.date_converter),
               'Date Publicly Available': ('date_publicly_available',False,None,util.date_converter),

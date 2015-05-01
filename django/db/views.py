@@ -43,6 +43,7 @@ from db.models import PubchemRequest, SmallMolecule, SmallMoleculeBatch, Cell, \
     Protein, DataSet, Library, FieldInformation, AttachedFile, DataRecord, \
     DataColumn, get_detail, Antibody, OtherReagent, CellBatch, QCEvent,\
     QCAttachedFile, AntibodyBatch
+from django.core.exceptions import ObjectDoesNotExist
 
 
 logger = logging.getLogger(__name__)
@@ -359,9 +360,10 @@ def antibodyDetail(request, facility_id, batch_id=None):
             return HttpResponse('Log in required.', status=401)
         
         _dict = get_detail(antibody, ['antibody',''])
-        if _dict['antibody_registry_ids'].get('value', None):
-            _dict['antibody_registry_ids']['value'] = \
-                [x.strip() for x in _dict['antibody_registry_ids']['value'].split(',')]
+        # TODO: is the AR_RRID field plural?
+        #         if _dict['antibody_registry_ids'].get('value', None):
+        #             _dict['antibody_registry_ids']['value'] = \
+        #                 [x.strip() for x in _dict['antibody_registry_ids']['value'].split(',')]
         details = {'object': _dict }        
 
         
@@ -384,7 +386,7 @@ def antibodyDetail(request, facility_id, batch_id=None):
             details['antibody_batch']= get_detail(
                 antibody_batch,['antibodybatch',''])
             attachedFiles = get_attached_files(
-                antibody.facility_id,batch_id=antibody_batch.batch_id)
+                antibody.facility_id,batch_id=antibody_batch.facility_batch_id)
             if(len(attachedFiles)>0):
                 details['attached_files_batch'] = AttachedFileTable(attachedFiles)        
         
@@ -2489,13 +2491,17 @@ class ProteinTable(PagedTable):
                         
 class AntibodyTable(PagedTable):
     facility_id = tables.LinkColumn("antibody_detail", args=[A('facility_id')])
-    
     alternative_names = DivWrappedColumn(classname='fixed_width_column', visible=False)
-    target_protein_name = DivWrappedColumn(classname='fixed_width_column', visible=False)
+    target_protein_name = DivWrappedColumn(classname='fixed_width_column', 
+        visible=False, accessor=A('protein.name'))
+    target_protein_uniprot_id = tables.Column(accessor=A('protein.uniprot_id'))
+    # TODO: when the protein table gets *both* a LINCS_ID and a Center ID
+    #     target_protein_facility_id = tables.Column(args=[A('protein.facility_id')])
+    target_protein_lincs_id = tables.Column(accessor=A('protein.lincs_id'))
     non_protein_target_name = DivWrappedColumn(classname='fixed_width_column', visible=False)
     immunogen = DivWrappedColumn(classname='fixed_width_column', visible=False)
-    production_information = DivWrappedColumn(classname='fixed_width_column', visible=False) 
-    antibody_labeling_conjugation = DivWrappedColumn(classname='fixed_width_column', visible=False)
+    production_details = DivWrappedColumn(classname='fixed_width_column', visible=False) 
+    labeling_details = DivWrappedColumn(classname='fixed_width_column', visible=False)
     relevant_references = DivWrappedColumn(classname='fixed_width_column', visible=False)
     
     rank = tables.Column()

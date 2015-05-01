@@ -147,7 +147,6 @@ then
   python src/import_smallmolecule.py -f  sampledata/HMS-LINCS_salts.sdf
   check_errs $? "import sdf fails"
 
-<<<<<<< HEAD
   echo 'import small molecule batch tables...'
   python src/import_smallmolecule_batch.py -f sampledata/small_molecule_batch-HMS_LINCS-1.xls
   check_errs $? "import smallmolecule batch fails"
@@ -165,12 +164,12 @@ then
   check_errs $? 'import kinases fails'
     
   echo 'import antibody tables...'
-  python src/import_antibody.py -f sampledata/HMS-LINCS_antibodies.xls
+  python src/import_antibody.py -f sampledata/sample_antibodies.xlsx
   check_errs $? 'import antibodies fails'
 
   echo 'import antibody batch tables...'
-  python src/import_antibody_batch.py -f sampledata/antibody_batch.xlsx
-  check_errs $? 'import antibody batch fails
+  python src/import_antibody_batch.py -f sampledata/sample_antibody_batch.xlsx
+  check_errs $? 'import antibody batch fails'
 
   echo 'import other reagent tables...'
   python src/import_other_reagent.py -f sampledata/HMS-LINCS_other_reagents.xls
@@ -196,47 +195,6 @@ then
   #echo 'import attached files...'
   #python ./src/import_attachedfiles.py -f sampledata/HPLC_HMSL10001.101.01.pdf -rp upload_files -fi 10001 -si 101 -bi 1 -ft 'QC-NMR' -fd 2012-10-11
   #check_errs $? "import attached file fails"
-=======
-	echo 'import small molecule batch tables...'
-	python src/import_smallmolecule_batch.py -f sampledata/small_molecule_batch-HMS_LINCS-1.xls
-	check_errs $? "import smallmolecule batch fails"
-	
-	echo 'import library mapping tables...'
-	python src/import_libraries.py -f sampledata/libraries.xls
-	check_errs $? "import library fails"
-    
-  echo 'import protein tables...'
-  python src/import_protein.py -f sampledata/HMS-LINCS_ProteinMetadata_forLoading.xls
-  check_errs $? 'import protein fails'
-    
-  echo 'import antibody tables...'
-  python src/import_antibody.py -f sampledata/sample_antibodies.xlsx
-  check_errs $? 'import antibodies fails'
-    
-  echo 'import antibody batch tables...'
-  python src/import_antibody_batch.py -f sampledata/sample_antibody_batch.xlsx
-  check_errs $? 'import antibody batch fails'
-    
-  echo 'import other reagent tables...'
-  python src/import_other_reagent.py -f sampledata/HMS-LINCS_other_reagents.xls
-  check_errs $? 'import other reagents fails'
-	
-	echo 'import test_dataset...'
-	python src/import_dataset.py -f sampledata/test_dataset.xls 
-	check_errs $? "import dataset fails"
-	
-	echo 'import targets_test_dataset.xls...'
-	python src/import_dataset.py -f sampledata/targets_test_dataset.xls 
-	check_errs $? "import dataset fails"
-	
-	echo 'import studies...'
-	python ./src/import_dataset.py -f sampledata/Screen20020_HMSL10008_kinomescan.xlsx
-	check_errs $? "import study dataset fails"
-	
-	echo 'import attached files...'
-  python ./src/import_attachedfiles.py -f sampledata/HPLC_HMSL10001.101.01.pdf -rp upload_files -fi 10001 -si 101 -bi 1 -ft 'QC-NMR' -fd 2012-10-11
-  check_errs $? "import attached file fails"
->>>>>>> updates to antibody fields and import specification
 
   # try attaching the same file to a cell batch, to test
   python ./src/import_attachedfiles.py -f sampledata/sample_attached_file_for_cell.txt -rp upload_files -fi 50001 -bi 1 -ft 'QC-NMR' -fd 2012-10-11
