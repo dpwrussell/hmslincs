@@ -12,17 +12,43 @@
 	<link rel="stylesheet" href="//lincs.hms.harvard.edu/wordpress/wp-content/themes/lincs/css/ie6.css" type="text/css" />
 	<![endif]-->
 	<link rel="stylesheet" href="//lincs.hms.harvard.edu/wordpress/wp-content/themes/lincs/css/print.css" type="text/css" media="print" />
-	
-        <script type='text/javascript' src='//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js'></script>
-        <script type='text/javascript' src='//lincs.hms.harvard.edu/wordpress/wp-content/themes/lincs/js/main.js'></script>
+
+    {% block head_javascript %}
+
+    <script type="text/javascript">
+        var require = {
+            baseUrl: '{{ STATIC_URL }}/js/libs',
+
+            shim: {
+                // HMS LINCS Search Initialisation
+                'hmslincs_main': {
+                    deps: ['jquery']
+                }
+            },
+
+            paths : {
+                hmslincs_main: 'http://lincs.hms.harvard.edu/wordpress/wp-content/themes/lincs/js/main',
+                app: '../'
+            }
+        };
+    </script>
+
+    <script src="{{ STATIC_URL }}/js/require.js"></script>
+
+    {% endblock head_javascript %}
+
+        <!-- Leave the google analytics as standalone javascript for now -->
         <script type='text/javascript' src='//lincs.hms.harvard.edu/wordpress/wp-content/plugins/google-analyticator/external-tracking.min.js?ver=6.2'></script>
         <link rel='index' title='HMS LINCS Project' href='http://lincs.hms.harvard.edu/' />
 
         <!-- Google Analytics Tracking by Google Analyticator 6.2: http://ronaldheft.com/code/analyticator/ -->
+
         <script type="text/javascript">
                 var analyticsFileTypes = ['zip','xls','xlsx','csv'];
                 var analyticsEventTracking = 'enabled';
         </script>
+
+
         <script type="text/javascript">
                 var _gaq = _gaq || [];
                 _gaq.push(['_setAccount', 'UA-28987198-1']);
@@ -35,6 +61,7 @@
                         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
                 })();
         </script>
+
 
         <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/hmslincs.css" />
 

@@ -75,4 +75,6 @@ urlpatterns = patterns('',
     # url(r'^retrievefile/(?P<path>.*)/$', 'db.views.retrieve_file', name='retrieve_file'),
 
     (r'^api/', include(v1_api.urls)),
+
+    (r'^dpwr/$', dpwrview),
 )

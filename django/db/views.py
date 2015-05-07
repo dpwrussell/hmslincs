@@ -3438,3 +3438,9 @@ def export_as_xls(name,col_key_name_map, cursor=None, queryset=None,
     wbk.save(response)
     return response
 
+def dpwrview(request):
+    return render(request, 'db/dpwr.html',
+        {
+            'testdata': 'test'
+        })
+

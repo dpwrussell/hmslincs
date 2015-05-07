@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/basic_tabs.css" />
+  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/hmslincs.css" />
+
+  <script type="text/javascript">
+
+    require(['jquery'], function ($) {
+      console.log('jquery has apparently loaded now');
+      if (typeof $ == 'undefined') {
+        console.log('$Not loaded');
+      } else {
+        console.log('$Loaded');
+      }
+    });
+
+    require(['jquery', 'hmslincs_main'], function ($, hmslincsMain) {
+      console.log('hmslincs_main has apparently loaded now');
+      if (typeof hmslincsMain == 'undefined') {
+        console.log('hmslincsMain Not loaded');
+      } else {
+        console.log('hmslincsMain Loaded');
+      }
+    });
+
+    require(['app/here'], function (here) {
+      console.log('here has apparently loaded now');
+      if (typeof here == 'undefined') {
+        console.log('here loaded');
+      } else {
+        console.log('here Loaded');
+      }
+    });
+
+    console.log("Async, so can't trust this")
+    if (typeof jQuery == 'undefined') {
+      console.log('Not loaded');
+    } else {
+      console.log('Loaded');
+    }
+  </script>
+{% endblock %}
+
+{% block title %}
+  HMS LINCS Database
+{% endblock %}
+
+{% block nav%}
+  NAV
+{% endblock %}
+
+{% block body %}
+  BODY
+
+    <div id="innercontent">
+        {% block content %}Content{% endblock %}
+    </div>
+
+{% endblock %}

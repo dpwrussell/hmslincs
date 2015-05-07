@@ -7,7 +7,6 @@ _sqlite3dbpath = op.join(_djangopath, 'hmslincs.db')
 # Django settings for hmslincs_server project.
 
 DEBUG = not op.abspath(__file__).startswith('/www/')
-TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     ('Sean Erickson', 'sean_erickson@hms.harvard.edu'),
@@ -86,6 +85,12 @@ else:
         '/home/sde4/docs/work/LINCS/data/images/',
         op.join(_djangopath, '..', 'sampledata', 'images' ),
     )   
+
+# Add the assets directory for cross-app dependancies
+STATICFILES_DIRS = STATICFILES_DIRS + (
+    op.normpath(op.join(_djangopath, 'assets')),
+)
+
 
 # add our custom hmslincs project library path
 import sys
