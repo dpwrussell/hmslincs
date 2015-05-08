@@ -17,18 +17,24 @@
 
     <script type="text/javascript">
         var require = {
-            baseUrl: '{{ STATIC_URL }}/js/libs',
+            baseUrl: '{{ STATIC_URL }}/js',
 
             shim: {
                 // HMS LINCS Search Initialisation
                 'hmslincs_main': {
                     deps: ['jquery']
+                },
+                'some': {
+                    deps: ['jquery'],
+                    exports: 'Some'
                 }
             },
 
             paths : {
+                // jquery needs to be special cased because it can not be referred to as 'libs/jquery' as it defines its own module name as 'jquery'
+                jquery: 'libs/jquery',
                 hmslincs_main: 'http://lincs.hms.harvard.edu/wordpress/wp-content/themes/lincs/js/main',
-                app: '../'
+                app: './'
             }
         };
     </script>
@@ -47,7 +53,6 @@
                 var analyticsFileTypes = ['zip','xls','xlsx','csv'];
                 var analyticsEventTracking = 'enabled';
         </script>
-
 
         <script type="text/javascript">
                 var _gaq = _gaq || [];

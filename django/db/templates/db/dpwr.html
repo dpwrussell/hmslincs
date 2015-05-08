@@ -6,7 +6,7 @@
 
   <script type="text/javascript">
 
-    require(['jquery'], function ($) {
+    require(['jquery', 'libs/jstree'], function ($) {
       console.log('jquery has apparently loaded now');
       if (typeof $ == 'undefined') {
         console.log('$Not loaded');
@@ -24,12 +24,23 @@
       }
     });
 
-    require(['app/here'], function (here) {
+    require(['db/here'], function (here) {
       console.log('here has apparently loaded now');
       if (typeof here == 'undefined') {
-        console.log('here loaded');
+        console.log('here not loaded');
       } else {
         console.log('here Loaded');
+        here.herefunc();
+      }
+    });
+
+    require(['some'], function (Some) {
+      console.log('some has apparently loaded now');
+      if (typeof Some == 'undefined') {
+        console.log('some not loaded');
+        Some.somefunc();
+      } else {
+        console.log('some Loaded');
       }
     });
 

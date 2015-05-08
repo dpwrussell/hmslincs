@@ -1,9 +1,9 @@
-define('here', ["jquery"], function(here) {
+define(["jquery"], function(here) {
   return {
     color: "blue",
     size: "large",
     herefunc: function() {
-      console.log('HEREFUNC2');
+      console.log('HEREFUNC');
     }
   }
 });
